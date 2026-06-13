@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
+  <title>HealthCare Pediatría</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    /* ═══════════════════════════════════════════════
+       index.css · Página de inicio · Mobile-First
+       ═══════════════════════════════════════════════ */
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 80px var(--content-pad) var(--space-3xl);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg-circle {
+      position: absolute;
+      border-radius: 50%;
+      background: var(--verde-claro);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .hero-bg-circle.a { width: 300px; height: 300px; right: -80px; top: -40px; opacity: .6; }
+    .hero-bg-circle.b { width: 160px; height: 160px; right: 40px; bottom: 100px; opacity: .3; }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      background: var(--verde-claro);
+      color: var(--verde);
+      border: 1px solid var(--borde);
+      padding: 6px 14px;
+      border-radius: var(--radio-full);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: var(--space-xl);
+      width: fit-content;
+      animation: fadeUp .6s ease both;
+    }
+    .hero-tag::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--verde-mid);
+    }
+    .hero-titulo {
+      font-family: var(--font-titulo);
+      font-size: clamp(32px, 8vw, 48px);
+      line-height: 1.1;
+      letter-spacing: -1px;
+      color: var(--texto);
+      margin-bottom: var(--space-lg);
+      animation: fadeUp .6s .1s ease both;
+    }
+    .hero-titulo em { color: var(--verde); font-style: italic; }
+    .hero-desc {
+      font-size: 16px;
+      color: var(--texto-s);
+      line-height: 1.7;
+      margin-bottom: var(--space-xl);
+      animation: fadeUp .6s .2s ease both;
+    }
+    .hero-btns {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      animation: fadeUp .6s .3s ease both;
+    }
+
+    .hero-imagen {
+      position: relative;
+      z-index: 1;
+      margin-top: var(--space-3xl);
+      display: flex;
+      justify-content: center;
+      animation: fadeIn .8s .2s ease both;
+    }
+    .hero-card-grande {
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-xl);
+      padding: var(--space-xl);
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 0 8px 32px rgba(26,122,94,.1);
+    }
+    .hero-card-grande .icono {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radio-lg);
+      background: var(--verde-claro);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: var(--space-lg);
+    }
+    .hero-card-grande h3 {
+      font-family: var(--font-titulo);
+      font-size: 20px;
+      color: var(--texto);
+      margin-bottom: var(--space-sm);
+    }
+    .hero-card-grande p {
+      font-size: 14px;
+      color: var(--texto-s);
+      margin-bottom: var(--space-xl);
+    }
+    .stat-row {
+      display: flex;
+      gap: var(--space-xl);
+      justify-content: center;
+    }
+    .stat { text-align: center; }
+    .stat strong {
+      display: block;
+      font-family: var(--font-titulo);
+      font-size: 24px;
+      color: var(--verde);
+    }
+    .stat span { font-size: 11px; color: var(--texto-s); }
+
+    .badge-flotante {
+      position: absolute;
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-lg);
+      padding: 10px 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.08);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--texto);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-flotante.uno { top: -12px; right: -8px; animation: float 3s ease-in-out infinite; }
+    .badge-flotante.dos { bottom: -12px; left: -8px; animation: float 3s 1.5s ease-in-out infinite; }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; }
+
+    /* ── SOBRE NOSOTROS ── */
+    .seccion-nosotros {
+      padding: var(--space-4xl) var(--content-pad);
+      background: var(--blanco);
+    }
+    .seccion-tag {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--verde-mid);
+      margin-bottom: var(--space-md);
+    }
+    .seccion-titulo {
+      font-family: var(--font-titulo);
+      font-size: clamp(26px, 6vw, 36px);
+      line-height: 1.15;
+      letter-spacing: -.5px;
+      margin-bottom: var(--space-lg);
+      color: var(--texto);
+    }
+    .seccion-titulo em { color: var(--verde); font-style: italic; }
+    .seccion-desc {
+      color: var(--texto-s);
+      font-size: 15px;
+      line-height: 1.75;
+      margin-bottom: var(--space-xl);
+    }
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+    .feature {
+      display: flex;
+      gap: var(--space-md);
+      align-items: flex-start;
+      background: var(--crema);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-lg);
+      padding: var(--space-lg);
+    }
+    .feature-ico {
+      font-size: 22px;
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radio-md);
+      background: var(--verde-claro);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feature-txt h4 { font-size: 15px; font-weight: 500; color: var(--texto); margin-bottom: 3px; }
+    .feature-txt p { font-size: 13px; color: var(--texto-s); }
+
+    .nosotros-visual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+      margin-top: var(--space-3xl);
+    }
+    .vis-card {
+      background: var(--crema);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-lg);
+      padding: var(--space-xl) var(--space-lg);
+      text-align: center;
+    }
+    .vis-card.accent {
+      background: var(--verde);
+      color: var(--blanco);
+      grid-row: span 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .vis-card.accent .vis-num { color: var(--blanco); }
+    .vis-card.accent .vis-label { color: rgba(255,255,255,.75); }
+    .vis-num {
+      font-family: var(--font-titulo);
+      font-size: 32px;
+      color: var(--verde);
+      line-height: 1;
+    }
+    .vis-label { font-size: 12px; color: var(--texto-s); margin-top: 6px; }
+
+    /* ── TURNOS ── */
+    .seccion-turnos {
+      padding: var(--space-4xl) var(--content-pad);
+      background: var(--crema);
+    }
+    .seccion-header {
+      text-align: center;
+      max-width: 560px;
+      margin: 0 auto var(--space-3xl);
+    }
+    .pasos {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+      max-width: 400px;
+      margin: 0 auto var(--space-3xl);
+    }
+    .paso {
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-lg);
+      padding: var(--space-xl);
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .paso:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(26,122,94,.12);
+    }
+    .paso-num {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--verde-claro);
+      color: var(--verde);
+      font-family: var(--font-titulo);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--space-md);
+    }
+    .paso h4 { font-size: 15px; font-weight: 500; color: var(--texto); margin-bottom: 6px; }
+    .paso p { font-size: 13px; color: var(--texto-s); line-height: 1.5; }
+
+    .turnos-cta {
+      text-align: center;
+      background: var(--verde);
+      border-radius: var(--radio-xl);
+      padding: var(--space-3xl) var(--space-xl);
+      box-shadow: 0 12px 40px rgba(26,122,94,.25);
+    }
+    .turnos-cta h3 {
+      font-family: var(--font-titulo);
+      font-size: 26px;
+      color: var(--blanco);
+      margin-bottom: var(--space-sm);
+    }
+    .turnos-cta p {
+      color: rgba(255,255,255,.8);
+      margin-bottom: var(--space-xl);
+      font-size: 15px;
+    }
+
+    /* ── CONTACTO ── */
+    .seccion-contacto {
+      padding: var(--space-4xl) var(--content-pad);
+      background: var(--blanco);
+    }
+    .contacto-datos {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      margin-top: var(--space-xl);
+    }
+    .dato {
+      display: flex;
+      gap: var(--space-md);
+      align-items: flex-start;
+      background: var(--crema);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-lg);
+      padding: var(--space-lg);
+    }
+    .dato-ico {
+      font-size: 20px;
+      width: 44px;
+      height: 44px;
+      background: var(--verde-claro);
+      border-radius: var(--radio-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .dato-txt strong { display: block; font-size: 14px; color: var(--texto); margin-bottom: 2px; }
+    .dato-txt span { font-size: 13px; color: var(--texto-s); }
+
+    .form-contacto {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      margin-top: var(--space-xl);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+    .form-contacto label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--texto-s);
+      margin-bottom: var(--space-xs);
+      display: block;
+    }
+    .form-contacto input,
+    .form-contacto textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--borde);
+      border-radius: var(--radio-md);
+      font-family: var(--font-cuerpo);
+      font-size: 16px;
+      color: var(--texto);
+      background: var(--crema);
+      outline: none;
+      transition: border-color .2s;
+      min-height: var(--touch-min);
+    }
+    .form-contacto input:focus,
+    .form-contacto textarea:focus { border-color: var(--verde); }
+    .form-contacto textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    /* ── DESKTOP OVERRIDES (min-width: 769px) ── */
+    @media (min-width: 769px) {
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        padding: 120px 48px 80px;
+        gap: 60px;
+      }
+      .hero-bg-circle.a { width: 500px; height: 500px; right: -80px; top: -80px; opacity: .7; }
+      .hero-bg-circle.b { width: 260px; height: 260px; right: 200px; bottom: 40px; opacity: .4; }
+      .hero-titulo { font-size: clamp(38px, 5vw, 62px); }
+      .hero-desc { font-size: 17px; max-width: 460px; }
+      .hero-btns { flex-direction: row; }
+      .hero-card-grande { max-width: 380px; padding: 36px; }
+      .hero-card-grande .icono { width: 64px; height: 64px; font-size: 30px; }
+      .stat strong { font-size: 28px; }
+      .badge-flotante.uno { top: -18px; right: -28px; }
+      .badge-flotante.dos { bottom: -18px; left: -28px; }
+
+      .seccion-nosotros {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+        padding: 100px 48px;
+      }
+      .seccion-titulo { font-size: clamp(28px, 4vw, 44px); }
+      .nosotros-visual { margin-top: 0; }
+      .vis-num { font-size: 40px; }
+
+      .seccion-turnos { padding: 100px 48px; }
+      .pasos {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        max-width: 960px;
+        position: relative;
+      }
+      .pasos::before {
+        content: '';
+        position: absolute;
+        top: 40px;
+        left: 10%;
+        right: 10%;
+        height: 1.5px;
+        background: var(--borde);
+        z-index: 0;
+      }
+      .paso { position: relative; z-index: 1; }
+      .turnos-cta { padding: 60px 40px; }
+      .turnos-cta h3 { font-size: 32px; }
+
+      .seccion-contacto {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: start;
+        padding: 100px 48px;
+      }
+      .form-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── TABLET (481px - 768px) ── */
+    @media (min-width: 481px) and (max-width: 768px) {
+      .hero { padding-top: 100px; }
+      .hero-titulo { font-size: 40px; }
+      .pasos { display: grid; grid-template-columns: 1fr 1fr; max-width: none; }
+      .seccion-nosotros { padding: 60px 32px; }
+      .seccion-contacto { padding: 60px 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-logo" href="#inicio">Health<span>Care</span></a>
+  <ul class="nav-links">
+    <li><a href="#inicio">Inicio</a></li>
+    <li><a href="#nosotros">Nosotros</a></li>
+    <li><a href="#turnos">Turnos</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <a href="login.html" class="nav-cta btn btn-sm">Sacar turno</a>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile Menu Overlay -->
+<div class="nav-menu-mobile" id="nav-menu-mobile">
+  <a href="#inicio" onclick="cerrarMenu()">Inicio</a>
+  <a href="#nosotros" onclick="cerrarMenu()">Nosotros</a>
+  <a href="#turnos" onclick="cerrarMenu()">Turnos</a>
+  <a href="#contacto" onclick="cerrarMenu()">Contacto</a>
+  <a href="login.html" class="btn btn-prim">Sacar turno</a>
+</div>
+
+<!-- HERO -->
+<section id="inicio" class="hero">
+  <div class="hero-bg-circle a"></div>
+  <div class="hero-bg-circle b"></div>
+
+  <div class="hero-content">
+    <div class="hero-tag">Pediatría de confianza</div>
+    <h1 class="hero-titulo">
+      Cuidamos a tus hijos<br>con <em>dedicación</em> y amor
+    </h1>
+    <p class="hero-desc">
+      En HealthCare brindamos atención pediátrica integral, con turnos online fáciles de sacar y un equipo comprometido con el bienestar de cada niño.
+    </p>
+    <div class="hero-btns">
+      <a href="login.html" class="btn btn-prim btn-lg">Sacar turno online</a>
+      <a href="#nosotros" class="btn btn-sec btn-lg">Conocernos</a>
+    </div>
+  </div>
+
+  <div class="hero-imagen">
+    <div class="hero-card-grande">
+      <div class="icono">🏥</div>
+      <h3>Atención pediátrica</h3>
+      <p>Desde recién nacidos hasta los 16 años, con el cuidado que cada etapa merece.</p>
+      <div class="stat-row">
+        <div class="stat"><strong>+500</strong><span>Pacientes</span></div>
+        <div class="stat"><strong>5</strong><span>Especialistas</span></div>
+        <div class="stat"><strong>10+</strong><span>Años</span></div>
+      </div>
+    </div>
+    <div class="badge-flotante uno">
+      <span class="badge-dot"></span> Turno disponible hoy
+    </div>
+    <div class="badge-flotante dos">
+      🔒 Pago 100% seguro
+    </div>
+  </div>
+</section>
+
+<!-- SOBRE NOSOTROS -->
+<section id="nosotros" class="seccion-nosotros">
+  <div class="nosotros-texto">
+    <p class="seccion-tag">Sobre nosotros</p>
+    <h2 class="seccion-titulo">Un equipo <em>apasionado</em> por la salud infantil</h2>
+    <p class="seccion-desc">
+      Somos un consultorio pediátrico privado comprometido con ofrecer atención de calidad, cálida y personalizada. Cada niño es único, y nuestro trabajo es acompañar su crecimiento con profesionalismo y afecto.
+    </p>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-ico">👨‍⚕️</div>
+        <div class="feature-txt">
+          <h4>Médicos especializados</h4>
+          <p>Equipo con formación continua y amplia experiencia clínica pediátrica.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-ico">📅</div>
+        <div class="feature-txt">
+          <h4>Turnos sin esperas</h4>
+          <p>Sistema de gestión online que minimiza los tiempos de espera.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-ico">🔒</div>
+        <div class="feature-txt">
+          <h4>Datos seguros</h4>
+          <p>Tu información y la de tu hijo siempre protegida y confidencial.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nosotros-visual">
+    <div class="vis-card accent tall">
+      <div class="vis-num">98%</div>
+      <div class="vis-label">de satisfacción de familias</div>
+    </div>
+    <div class="vis-card">
+      <div class="vis-num">+10</div>
+      <div class="vis-label">años de experiencia</div>
+    </div>
+    <div class="vis-card">
+      <div class="vis-num">5</div>
+      <div class="vis-label">doctores especializados</div>
+    </div>
+  </div>
+</section>
+
+<!-- TURNOS -->
+<section id="turnos" class="seccion-turnos">
+  <div class="seccion-header">
+    <p class="seccion-tag">¿Cómo funciona?</p>
+    <h2 class="seccion-titulo">Sacar tu turno es <em>muy simple</em></h2>
+    <p style="color:var(--texto-s);font-size:16px">En cuatro pasos tenés tu consulta reservada y confirmada.</p>
+  </div>
+
+  <div class="pasos">
+    <div class="paso">
+      <div class="paso-num">1</div>
+      <h4>Creá tu cuenta</h4>
+      <p>Registrate con tu nombre, apellido y DNI en menos de un minuto.</p>
+    </div>
+    <div class="paso">
+      <div class="paso-num">2</div>
+      <h4>Pedí el turno</h4>
+      <p>Indicá el motivo de consulta y enviá la solicitud al consultorio.</p>
+    </div>
+    <div class="paso">
+      <div class="paso-num">3</div>
+      <h4>Confirmamos</h4>
+      <p>Nuestro equipo te asigna un horario según la agenda del doctor.</p>
+    </div>
+    <div class="paso">
+      <div class="paso-num">4</div>
+      <h4>Pagá y listo</h4>
+      <p>Confirmá el turno con el pago online seguro a través de Mercado Pago.</p>
+    </div>
+  </div>
+
+  <div class="turnos-cta">
+    <h3>¿Listo para reservar?</h3>
+    <p>Ingresá a tu cuenta o creá una nueva para empezar.</p>
+    <a href="login.html" class="btn btn-blanco btn-lg">Sacar turno ahora</a>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section id="contacto" class="seccion-contacto">
+  <div class="contacto-info">
+    <p class="seccion-tag">Contacto</p>
+    <h2 class="seccion-titulo">¿Tenés alguna <em>consulta</em>?</h2>
+    <p class="seccion-desc">Estamos para ayudarte. También podés escribirnos y te respondemos a la brevedad.</p>
+    <div class="contacto-datos">
+      <div class="dato">
+        <div class="dato-ico">📍</div>
+        <div class="dato-txt">
+          <strong>Dirección</strong>
+          <span>Av. Corrientes 1234, Buenos Aires</span>
+        </div>
+      </div>
+      <div class="dato">
+        <div class="dato-ico">📞</div>
+        <div class="dato-txt">
+          <strong>Teléfono</strong>
+          <span>+54 11 4000-0000</span>
+        </div>
+      </div>
+      <div class="dato">
+        <div class="dato-ico">✉️</div>
+        <div class="dato-txt">
+          <strong>Email</strong>
+          <span>contacto@healthcare-pediatria.com.ar</span>
+        </div>
+      </div>
+      <div class="dato">
+        <div class="dato-ico">🕐</div>
+        <div class="dato-txt">
+          <strong>Horario de atención</strong>
+          <span>Lunes a viernes: 8:00 – 19:00 hs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="seccion-tag" style="margin-top:8px">Escribinos</p>
+    <h3 style="font-family:var(--font-titulo);font-size:24px;margin-bottom:var(--space-lg);color:var(--texto)">Envianos un mensaje</h3>
+    <form class="form-contacto" onsubmit="enviarContacto(event)">
+      <div class="form-row">
+        <div>
+          <label for="cf-nombre">Nombre</label>
+          <input type="text" id="cf-nombre" placeholder="Tu nombre" required>
+        </div>
+        <div>
+          <label for="cf-apellido">Apellido</label>
+          <input type="text" id="cf-apellido" placeholder="Tu apellido" required>
+        </div>
+      </div>
+      <div>
+        <label for="cf-email">Email</label>
+        <input type="email" id="cf-email" placeholder="tu@email.com" required>
+      </div>
+      <div>
+        <label for="cf-mensaje">Mensaje</label>
+        <textarea id="cf-mensaje" placeholder="Escribí tu consulta acá..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-prim">Enviar mensaje</button>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>&copy; 2025 <strong>HealthCare Pediatría</strong>. Todos los derechos reservados.</p>
+</footer>
+
+<script>
+  // ── Mobile Menu ──
+  const navToggle = document.getElementById('nav-toggle');
+  const navMenu = document.getElementById('nav-menu-mobile');
+
+  navToggle.addEventListener('click', () => {
+    const isOpen = navMenu.classList.toggle('activo');
+    navToggle.classList.toggle('activo', isOpen);
+    navToggle.setAttribute('aria-expanded', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+
+  function cerrarMenu() {
+    navMenu.classList.remove('activo');
+    navToggle.classList.remove('activo');
+    navToggle.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  // Cerrar menú al hacer click en un link
+  navMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', cerrarMenu);
+  });
+
+  // ── Contacto ──
+  function enviarContacto(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('.btn');
+    const originalText = btn.textContent;
+    btn.textContent = '¡Enviado! ✓';
+    btn.style.background = '#22c55e';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+      btn.disabled = false;
+      e.target.reset();
+    }, 3000);
+  }
+
+  // ── Scroll animations ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.paso, .feature, .dato, .vis-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+</script>
+
+</body>
+</html>

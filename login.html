@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
+  <title>Ingresar · HealthCare Pediatría</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    /* ═══════════════════════════════════════════════
+       login.css · Mobile-First
+       ═══════════════════════════════════════════════ */
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Panel izquierdo - oculto en mobile */
+    .auth-panel-left {
+      display: none;
+    }
+
+    /* Panel derecho - full width mobile */
+    .auth-panel-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: var(--space-xl) var(--content-pad);
+      min-height: 100vh;
+    }
+
+    .form-box {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: var(--verde-claro);
+      border-radius: var(--radio-full);
+      padding: 4px;
+      margin-bottom: var(--space-xl);
+      border: 1px solid var(--borde);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      font-family: var(--font-cuerpo);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--texto-s);
+      border-radius: var(--radio-full);
+      cursor: pointer;
+      transition: all .25s;
+      min-height: var(--touch-min);
+    }
+    .tab-btn.active {
+      background: var(--verde);
+      color: var(--blanco);
+      box-shadow: 0 2px 10px rgba(26,122,94,.3);
+    }
+
+    .form-titulo {
+      font-family: var(--font-titulo);
+      font-size: 26px;
+      color: var(--texto);
+      margin-bottom: 6px;
+      letter-spacing: -.3px;
+    }
+    .form-subtitulo {
+      font-size: 14px;
+      color: var(--texto-s);
+      margin-bottom: var(--space-xl);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-xl);
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+    }
+
+    .form-footer {
+      text-align: center;
+      margin-top: var(--space-xl);
+      font-size: 14px;
+      color: var(--texto-s);
+    }
+
+    /* ── DESKTOP (min-width: 769px) ── */
+    @media (min-width: 769px) {
+      .auth-page {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .auth-panel-left {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: var(--verde);
+        padding: 48px;
+        position: relative;
+        overflow: hidden;
+      }
+      .pl-circulo {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255,255,255,.07);
+        pointer-events: none;
+      }
+      .pl-circulo.a { width: 400px; height: 400px; right: -100px; top: -100px; }
+      .pl-circulo.b { width: 280px; height: 280px; right: 60px; bottom: -60px; }
+      .pl-circulo.c { width: 160px; height: 160px; left: -40px; top: 200px; }
+      .pl-logo {
+        font-family: var(--font-titulo);
+        font-size: 24px;
+        color: var(--blanco);
+        text-decoration: none;
+        position: relative;
+        z-index: 1;
+      }
+      .pl-logo span { color: rgba(255,255,255,.55); }
+      .pl-content {
+        position: relative;
+        z-index: 1;
+      }
+      .pl-content h2 {
+        font-family: var(--font-titulo);
+        font-size: clamp(32px, 3.5vw, 48px);
+        color: var(--blanco);
+        line-height: 1.1;
+        letter-spacing: -.5px;
+        margin-bottom: 18px;
+      }
+      .pl-content h2 em { color: rgba(255,255,255,.65); font-style: italic; }
+      .pl-content p {
+        color: rgba(255,255,255,.75);
+        font-size: 16px;
+        line-height: 1.7;
+        max-width: 380px;
+        margin-bottom: 40px;
+      }
+      .pl-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .pl-card {
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 16px;
+        padding: 18px 20px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        backdrop-filter: blur(4px);
+      }
+      .pl-card-ico {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+      .pl-card-txt strong { display: block; color: var(--blanco); font-size: 14px; margin-bottom: 2px; }
+      .pl-card-txt span { color: rgba(255,255,255,.65); font-size: 13px; }
+      .pl-footer {
+        color: rgba(255,255,255,.45);
+        font-size: 13px;
+        position: relative;
+        z-index: 1;
+      }
+      .auth-panel-right {
+        padding: 48px 40px;
+        overflow-y: auto;
+      }
+      .form-titulo { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+
+  <!-- PANEL IZQUIERDO -->
+  <div class="auth-panel-left">
+    <div class="pl-circulo a"></div>
+    <div class="pl-circulo b"></div>
+    <div class="pl-circulo c"></div>
+    <a href="index.html" class="pl-logo">Health<span>Care</span></a>
+    <div class="pl-content">
+      <h2>Tu salud,<br>nuestra <em>prioridad</em></h2>
+      <p>Gestioná tus turnos pediátricos de forma simple, segura y desde cualquier dispositivo.</p>
+      <div class="pl-cards">
+        <div class="pl-card"><div class="pl-card-ico">📅</div><div class="pl-card-txt"><strong>Turnos en minutos</strong><span>Sin llamadas ni esperas innecesarias</span></div></div>
+        <div class="pl-card"><div class="pl-card-ico">🔒</div><div class="pl-card-txt"><strong>100% seguro</strong><span>Datos protegidos y pago cifrado</span></div></div>
+        <div class="pl-card"><div class="pl-card-ico">👨‍⚕️</div><div class="pl-card-txt"><strong>Equipo especializado</strong><span>Pediatras con años de experiencia</span></div></div>
+      </div>
+    </div>
+    <p class="pl-footer">&copy; 2025 HealthCare Pediatría</p>
+  </div>
+
+  <!-- PANEL DERECHO -->
+  <div class="auth-panel-right">
+    <div class="form-box">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="cambiarTab('login')">Iniciar sesión</button>
+        <button class="tab-btn" onclick="cambiarTab('registro')">Crear cuenta</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="form-panel active" id="panel-login">
+        <h2 class="form-titulo">Bienvenido de nuevo</h2>
+        <p class="form-subtitulo">Ingresá con tu cuenta para gestionar tus turnos.</p>
+        <div class="alerta" id="alerta-login"></div>
+        <form id="form-login" onsubmit="submitLogin(event)" novalidate>
+          <div class="campo">
+            <label for="l-email">Correo electrónico</label>
+            <div class="input-wrap">
+              <span class="input-ico">✉️</span>
+              <input type="email" id="l-email" placeholder="tu@email.com" autocomplete="email">
+            </div>
+            <p class="msg-error" id="err-l-email">⚠ Ingresá un email válido.</p>
+          </div>
+          <div class="campo">
+            <label for="l-pass">Contraseña</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="l-pass" placeholder="Tu contraseña" class="con-ojo" autocomplete="current-password">
+              <button type="button" class="ojo" onclick="togglePass('l-pass',this)" aria-label="Mostrar contraseña">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20"/><path d="M6.7 6.7A9.77 9.77 0 0 0 2 12c2 4 5.5 6 10 6a9.9 9.9 0 0 0 5.3-1.55"/><path d="M10.58 10.58A3 3 0 0 0 14.99 15"/><path d="M17.35 17.35C15.7 18.4 13.92 19 12 19c-4.5 0-8-2-10-6a11.1 11.1 0 0 1 3.35-4.35"/><path d="M20.45 14.8A10.1 10.1 0 0 0 22 12c-2-4-5.5-6-10-6a9.6 9.6 0 0 0-2.65.38"/></svg>
+              </button>
+            </div>
+            <p class="msg-error" id="err-l-pass">⚠ La contraseña no puede estar vacía.</p>
+          </div>
+          <div class="check-row">
+            <label class="check-label"><input type="checkbox" id="recordar"> Recordarme</label>
+            <a href="#" class="link-verde">¿Olvidaste tu contraseña?</a>
+          </div>
+          <button type="submit" class="btn btn-prim btn-full" id="btn-login">
+            <span class="spinner" id="spin-login"></span>
+            <span id="txt-login">Iniciar sesión</span>
+          </button>
+        </form>
+        <p class="form-footer">¿No tenés cuenta? <a href="#" class="link-verde" onclick="cambiarTab('registro')">Registrate acá</a></p>
+      </div>
+
+      <!-- REGISTRO -->
+      <div class="form-panel" id="panel-registro">
+        <h2 class="form-titulo">Crear cuenta</h2>
+        <p class="form-subtitulo">Completá tus datos para registrarte.</p>
+        <div class="alerta" id="alerta-registro"></div>
+        <form id="form-registro" onsubmit="submitRegistro(event)" novalidate>
+          <div class="campo">
+            <div class="form-grid">
+              <div>
+                <label for="r-nombre">Nombre</label>
+                <div class="input-wrap">
+                  <span class="input-ico">👤</span>
+                  <input type="text" id="r-nombre" placeholder="Juan" autocomplete="given-name">
+                </div>
+                <p class="msg-error" id="err-r-nombre">⚠ Ingresá tu nombre.</p>
+              </div>
+              <div>
+                <label for="r-apellido">Apellido</label>
+                <div class="input-wrap">
+                  <span class="input-ico">👤</span>
+                  <input type="text" id="r-apellido" placeholder="García" autocomplete="family-name">
+                </div>
+                <p class="msg-error" id="err-r-apellido">⚠ Ingresá tu apellido.</p>
+              </div>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="r-dni">DNI</label>
+            <div class="input-wrap">
+              <span class="input-ico">🪪</span>
+              <input type="text" id="r-dni" placeholder="12345678" maxlength="8" inputmode="numeric">
+            </div>
+            <p class="msg-error" id="err-r-dni">⚠ Ingresá un DNI válido (7 u 8 dígitos).</p>
+          </div>
+          <div class="campo">
+            <label for="r-email">Correo electrónico</label>
+            <div class="input-wrap">
+              <span class="input-ico">✉️</span>
+              <input type="email" id="r-email" placeholder="tu@email.com" autocomplete="email">
+            </div>
+            <p class="msg-error" id="err-r-email">⚠ Ingresá un email válido.</p>
+          </div>
+          <div class="campo">
+            <label for="r-pass">Contraseña</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="r-pass" placeholder="Mínimo 8 caracteres" class="con-ojo" autocomplete="new-password" oninput="calcStrength(this.value)">
+              <button type="button" class="ojo" onclick="togglePass('r-pass',this)" aria-label="Mostrar contraseña">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20"/><path d="M6.7 6.7A9.77 9.77 0 0 0 2 12c2 4 5.5 6 10 6a9.9 9.9 0 0 0 5.3-1.55"/><path d="M10.58 10.58A3 3 0 0 0 14.99 15"/><path d="M17.35 17.35C15.7 18.4 13.92 19 12 19c-4.5 0-8-2-10-6a11.1 11.1 0 0 1 3.35-4.35"/><path d="M20.45 14.8A10.1 10.1 0 0 0 22 12c-2-4-5.5-6-10-6a9.6 9.6 0 0 0-2.65.38"/></svg>
+              </button>
+            </div>
+            <div class="pass-strength">
+              <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+              <span class="strength-label" id="strength-label">Ingresá una contraseña</span>
+            </div>
+            <p class="msg-error" id="err-r-pass">⚠ Mínimo 8 caracteres.</p>
+          </div>
+          <div class="campo">
+            <label for="r-pass2">Repetir contraseña</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="r-pass2" placeholder="Repetí tu contraseña" class="con-ojo" autocomplete="new-password">
+              <button type="button" class="ojo" onclick="togglePass('r-pass2',this)" aria-label="Mostrar contraseña">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20"/><path d="M6.7 6.7A9.77 9.77 0 0 0 2 12c2 4 5.5 6 10 6a9.9 9.9 0 0 0 5.3-1.55"/><path d="M10.58 10.58A3 3 0 0 0 14.99 15"/><path d="M17.35 17.35C15.7 18.4 13.92 19 12 19c-4.5 0-8-2-10-6a11.1 11.1 0 0 1 3.35-4.35"/><path d="M20.45 14.8A10.1 10.1 0 0 0 22 12c-2-4-5.5-6-10-6a9.6 9.6 0 0 0-2.65.38"/></svg>
+              </button>
+            </div>
+            <p class="msg-error" id="err-r-pass2">⚠ Las contraseñas no coinciden.</p>
+          </div>
+          <div style="margin-bottom:var(--space-xl)">
+            <label class="check-label" style="font-size:14px;color:var(--texto-s);gap:8px">
+              <input type="checkbox" id="r-terminos" style="accent-color:var(--verde)">
+              Acepto los <a href="#" class="link-verde">términos y condiciones</a>
+            </label>
+            <p class="msg-error" id="err-r-terminos">⚠ Debés aceptar los términos.</p>
+          </div>
+          <button type="submit" class="btn btn-prim btn-full" id="btn-registro">
+            <span class="spinner" id="spin-registro"></span>
+            <span id="txt-registro">Crear cuenta</span>
+          </button>
+        </form>
+        <p class="form-footer">¿Ya tenés cuenta? <a href="#" class="link-verde" onclick="cambiarTab('login')">Iniciá sesión</a></p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+  const SUPABASE_URL = 'https://zayvsijksoolbksaybjl.supabase.co'
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpheXZzaWprc29vbGJrc2F5YmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3Nzc2MjUsImV4cCI6MjA5MTM1MzYyNX0.qtTSevotMfsCMFYd7xM5tZ4dcr0bSohkQFXzsYVz7HQ'
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+  /* ── TABS ── */
+  window.cambiarTab = function(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => {
+      b.classList.toggle('active', (tab==='login'&&i===0)||(tab==='registro'&&i===1))
+    })
+    document.getElementById('panel-login').classList.toggle('active', tab==='login')
+    document.getElementById('panel-registro').classList.toggle('active', tab==='registro')
+    limpiarAlertas()
+  }
+
+  /* ── OJO CONTRASEÑA ── */
+  const SVG_ABIERTO = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="10" ry="6"/><circle cx="12" cy="12" r="3"/></svg>`
+  const SVG_CERRADO = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20"/><path d="M6.7 6.7A9.77 9.77 0 0 0 2 12c2 4 5.5 6 10 6a9.9 9.9 0 0 0 5.3-1.55"/><path d="M10.58 10.58A3 3 0 0 0 14.99 15"/><path d="M17.35 17.35C15.7 18.4 13.92 19 12 19c-4.5 0-8-2-10-6a11.1 11.1 0 0 1 3.35-4.35"/><path d="M20.45 14.8A10.1 10.1 0 0 0 22 12c-2-4-5.5-6-10-6a9.6 9.6 0 0 0-2.65.38"/></svg>`
+  window.togglePass = function(id, btn) {
+    const input = document.getElementById(id)
+    const show  = input.type === 'password'
+    input.type  = show ? 'text' : 'password'
+    btn.innerHTML = show ? SVG_ABIERTO : SVG_CERRADO
+    btn.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña')
+  }
+
+  /* ── FORTALEZA CONTRASEÑA ── */
+  window.calcStrength = function(val) {
+    const fill  = document.getElementById('strength-fill')
+    const label = document.getElementById('strength-label')
+    let score = 0
+    if (val.length >= 8)          score++
+    if (/[A-Z]/.test(val))        score++
+    if (/[0-9]/.test(val))        score++
+    if (/[^A-Za-z0-9]/.test(val)) score++
+    const niveles = [
+      { pct:'0%',   color:'',        txt:'Ingresá una contraseña' },
+      { pct:'25%',  color:'#ef4444', txt:'Muy débil' },
+      { pct:'50%',  color:'#f97316', txt:'Débil' },
+      { pct:'75%',  color:'#eab308', txt:'Buena' },
+      { pct:'100%', color:'#16a34a', txt:'Muy segura ✓' },
+    ]
+    const n = val.length === 0 ? 0 : Math.max(1, score)
+    fill.style.width      = niveles[n].pct
+    fill.style.background = niveles[n].color
+    label.textContent     = niveles[n].txt
+    label.style.color     = niveles[n].color || 'var(--texto-s)'
+  }
+
+  /* ── HELPERS UI ── */
+  function marcar(id, ok) {
+    const el = document.getElementById(id)
+    el.classList.toggle('error-field', !ok)
+    el.classList.toggle('ok-field', ok)
+  }
+  function mostrarError(id, v) { document.getElementById(id).classList.toggle('visible', v) }
+  function limpiarAlertas() {
+    document.querySelectorAll('.alerta').forEach(a => a.classList.remove('visible','ok','err'))
+    document.querySelectorAll('.msg-error').forEach(m => m.classList.remove('visible'))
+    document.querySelectorAll('input').forEach(i => i.classList.remove('error-field','ok-field'))
+  }
+  function mostrarAlerta(id, tipo, msg) {
+    const el = document.getElementById(id)
+    el.className = `alerta ${tipo} visible`
+    el.textContent = msg
+  }
+  function setLoading(form, loading) {
+    const s = form === 'login' ? 'login' : 'registro'
+    document.getElementById('spin-'+s).classList.toggle('visible', loading)
+    document.getElementById('txt-'+s).style.display = loading ? 'none' : ''
+    document.getElementById('btn-'+s).disabled = loading
+  }
+  function tradError(msg) {
+    const e = {
+      'Invalid login credentials':   'Email o contraseña incorrectos.',
+      'Email not confirmed':          'Confirmá tu email antes de ingresar.',
+      'User already registered':      'Ya existe una cuenta con ese email.',
+      'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
+    }
+    return e[msg] ?? msg
+  }
+
+  /* ── LOGIN ── */
+  window.submitLogin = async function(e) {
+    e.preventDefault()
+    limpiarAlertas()
+    const email = document.getElementById('l-email').value.trim()
+    const pass  = document.getElementById('l-pass').value
+    let ok = true
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    marcar('l-email', emailOk); mostrarError('err-l-email', !emailOk)
+    if (!emailOk) ok = false
+    const passOk = pass.length > 0
+    marcar('l-pass', passOk); mostrarError('err-l-pass', !passOk)
+    if (!passOk) ok = false
+    if (!ok) return
+
+    setLoading('login', true)
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass })
+
+    if (error) {
+      mostrarAlerta('alerta-login', 'err', tradError(error.message))
+      setLoading('login', false)
+      return
+    }
+
+    const { data: perfil, error: errPerfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', data.user.id)
+      .single()
+
+    if (errPerfil || !perfil) {
+      mostrarAlerta('alerta-login', 'err', 'No se pudo leer el perfil. Contactá al administrador.')
+      setLoading('login', false)
+      return
+    }
+
+    mostrarAlerta('alerta-login', 'ok', '✓ ¡Bienvenido! Redirigiendo...')
+
+    const destinos = {
+      paciente:       'dashboard/paciente.html',
+      doctor:         'dashboard/doctor.html',
+      administracion: 'dashboard/admin.html'
+    }
+    setTimeout(() => { window.location.href = destinos[perfil.rol] || 'login.html' }, 1200)
+  }
+
+  /* ── REGISTRO ── */
+  window.submitRegistro = async function(e) {
+    e.preventDefault()
+    limpiarAlertas()
+    const nombre   = document.getElementById('r-nombre').value.trim()
+    const apellido = document.getElementById('r-apellido').value.trim()
+    const dni      = document.getElementById('r-dni').value.trim()
+    const email    = document.getElementById('r-email').value.trim()
+    const pass     = document.getElementById('r-pass').value
+    const pass2    = document.getElementById('r-pass2').value
+    const terminos = document.getElementById('r-terminos').checked
+    let ok = true
+
+    const nombreOk = nombre.length >= 2
+    marcar('r-nombre', nombreOk); mostrarError('err-r-nombre', !nombreOk)
+    if (!nombreOk) ok = false
+
+    const apellidoOk = apellido.length >= 2
+    marcar('r-apellido', apellidoOk); mostrarError('err-r-apellido', !apellidoOk)
+    if (!apellidoOk) ok = false
+
+    const dniOk = /^\d{7,8}$/.test(dni)
+    marcar('r-dni', dniOk); mostrarError('err-r-dni', !dniOk)
+    if (!dniOk) ok = false
+
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    marcar('r-email', emailOk); mostrarError('err-r-email', !emailOk)
+    if (!emailOk) ok = false
+
+    const passOk = pass.length >= 8
+    marcar('r-pass', passOk); mostrarError('err-r-pass', !passOk)
+    if (!passOk) ok = false
+
+    const pass2Ok = pass === pass2 && pass2.length > 0
+    marcar('r-pass2', pass2Ok); mostrarError('err-r-pass2', !pass2Ok)
+    if (!pass2Ok) ok = false
+
+    mostrarError('err-r-terminos', !terminos)
+    if (!terminos) ok = false
+    if (!ok) return
+
+    setLoading('registro', true)
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { nombre, apellido, dni } }
+    })
+
+    if (error) {
+      mostrarAlerta('alerta-registro', 'err', tradError(error.message))
+      setLoading('registro', false)
+      return
+    }
+
+    const { error: errPerfil } = await supabase
+      .from('perfiles')
+      .insert({ id: data.user.id, nombre, apellido, dni, email, rol: 'paciente' })
+
+    if (errPerfil) {
+      mostrarAlerta('alerta-registro', 'err', 'Error al guardar el perfil. Intentá de nuevo.')
+      setLoading('registro', false)
+      return
+    }
+
+    setLoading('registro', false)
+    mostrarAlerta('alerta-registro', 'ok', '✓ Cuenta creada. Revisá tu email para confirmar.')
+    document.getElementById('form-registro').reset()
+    window.calcStrength('')
+    setTimeout(() => window.cambiarTab('login'), 2800)
+  }
+  </script>
+  <!-- REACTIVACIÓN DE CUENTA (desde email de inactividad) -->
+  <script type="module">
+    import { authService } from './js/services/authService.js'
+
+    // Detectar parámetros de reactivación en URL
+    const urlParams = new URLSearchParams(window.location.search)
+    const reactivar = urlParams.get('reactivar')
+    const token = urlParams.get('token')
+
+    if (reactivar === 'true' && token) {
+      // Mostrar banner de reactivación
+      const alertaDiv = document.getElementById('alerta-login')
+      if (alertaDiv) {
+        alertaDiv.className = 'alerta ok visible'
+        alertaDiv.textContent = '⏳ Reactivando tu cuenta...'
+      }
+
+      // Intentar reactivar
+      authService.reactivateAccount(token)
+        .then(() => {
+          if (alertaDiv) {
+            alertaDiv.className = 'alerta ok visible'
+            alertaDiv.textContent = '✅ Tu cuenta fue reactivada. Iniciá sesión para continuar.'
+          }
+          // Limpiar URL
+          window.history.replaceState({}, document.title, window.location.pathname)
+        })
+        .catch((err) => {
+          if (alertaDiv) {
+            alertaDiv.className = 'alerta err visible'
+            alertaDiv.textContent = '❌ ' + err.message
+          }
+          // Limpiar URL
+          window.history.replaceState({}, document.title, window.location.pathname)
+        })
+  }
+</script>
+</body>
+</html>

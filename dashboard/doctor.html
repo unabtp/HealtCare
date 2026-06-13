@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
+  <title>Panel Médico · HealthCare Pediatría</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    /* ── ESTILOS ESPECÍFICOS DOCTOR ── */
+
+    .calendario-mes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px; }
+    .cal-header { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--texto-s); font-weight: 600; padding: 8px; }
+    .cal-dia-editor {
+      aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: var(--blanco); border: 2px solid var(--borde); border-radius: 12px;
+      font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; position: relative;
+    }
+    .cal-dia-editor:hover { border-color: var(--verde); transform: scale(1.05); }
+    .cal-dia-editor.disponible { background: var(--verde-claro); border-color: var(--verde-mid); color: var(--verde); }
+    .cal-dia-editor.ocupado { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; }
+    .cal-dia-editor.pasado { opacity: .4; cursor: not-allowed; }
+    .cal-dia-editor .cal-num { font-size: 18px; font-family: var(--font-titulo); }
+    .cal-dia-editor .cal-estado { font-size: 10px; margin-top: 2px; }
+
+    .horarios-editor { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .hora-editor {
+      padding: 8px 18px; border-radius: 20px; border: 2px solid var(--borde);
+      background: var(--blanco); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s;
+    }
+    .hora-editor:hover { border-color: var(--verde); }
+    .hora-editor.activo { background: var(--verde); color: var(--blanco); border-color: var(--verde); }
+    .hora-editor.eliminado { background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb; text-decoration: line-through; }
+
+    .estado-atencion { display: flex; gap: 10px; align-items: center; }
+    .estado-badge {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .estado-badge.pendiente { background: var(--verde-claro); color: var(--verde); }
+    .estado-badge.atendiendo { background: var(--warn-bg); color: #854d0e; }
+    .estado-badge.finalizado { background: var(--ok-bg); color: var(--ok); }
+
+    .modal-historial .push-box { max-width: 600px; text-align: left; }
+    .modal-historial .push-titulo { text-align: center; }
+    .modal-historial .push-msg { text-align: center; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<!-- MOBILE HEADER -->
+<div class="dash-mobile-header">
+  <div class="logo">Health<span>Care</span></div>
+  <button class="dash-mobile-toggle" id="menu-toggle" aria-label="Abrir menú">☰</button>
+</div>
+
+<!-- MOBILE SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="sidebar-mobile" id="sidebar-mobile">
+  <div>
+    <div class="sidebar-brand">Health<span>Care</span></div>
+    <div class="sidebar-logo">🏥 Pediatría</div>
+    <ul class="sidebar-menu">
+      <li class="sidebar-item active" onclick="cambiarSubseccion('agenda'); cerrarSidebar()">🩺 Agenda del Día</li>
+      <li class="sidebar-item" onclick="cambiarSubseccion('pacientes'); cerrarSidebar()">👥 Mis Pacientes</li>
+      <li class="sidebar-item" onclick="cambiarSubseccion('calendario'); cerrarSidebar()">📅 Subir Calendario</li>
+    </ul>
+  </div>
+  <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+</div>
+
+<!-- BOTÓN RETROCEDER -->
+<button class="btn-retroceder" onclick="window.location.href='../index.html'">Volver al inicio</button>
+
+<!-- MODAL HISTORIAL -->
+<div class="push-overlay modal-historial" id="modal-historial">
+  <div class="push-box">
+    <div class="push-titulo">📝 Actualizar historial médico</div>
+    <div class="push-msg" id="modal-historial-paciente"></div>
+    <form onsubmit="guardarHistorial(event)">
+      <div class="campo">
+        <label>Diagnóstico / Control</label>
+        <div class="input-wrap">
+          <span class="input-ico">🩺</span>
+          <textarea id="h-diagnostico" placeholder="Descripción del diagnóstico..."></textarea>
+        </div>
+      </div>
+      <div class="campo">
+        <label>Tratamiento / Receta</label>
+        <div class="input-wrap">
+          <span class="input-ico">💊</span>
+          <textarea id="h-tratamiento" placeholder="Medicación, dosis, indicaciones..."></textarea>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; justify-content: center; margin-top: 20px">
+        <button type="button" class="btn btn-sec" onclick="cerrarModalHistorial()">Cancelar</button>
+        <button type="submit" class="btn btn-prim">Guardar y finalizar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="dashboard-layout">
+  <!-- DESKTOP SIDEBAR -->
+  <div class="sidebar">
+    <div>
+      <div class="sidebar-brand">Health<span>Care</span></div>
+      <div class="sidebar-logo">🏥 Pediatría</div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-item active" onclick="cambiarSubseccion('agenda')">🩺 Agenda del Día</li>
+        <li class="sidebar-item" onclick="cambiarSubseccion('pacientes')">👥 Mis Pacientes</li>
+        <li class="sidebar-item" onclick="cambiarSubseccion('calendario')">📅 Subir Calendario</li>
+      </ul>
+    </div>
+    <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="dash-header">
+      <div class="dash-header-info">
+        <span class="badge badge-doctor">Cuerpo Médico</span>
+        <h1 class="dash-titulo" id="saludo-usuario">Panel del Profesional</h1>
+      </div>
+    </div>
+
+    <!-- SUB: AGENDA DEL DÍA -->
+    <div id="sub-agenda" class="subseccion-dash activa">
+      <div class="metrics-grid">
+        <div class="card card-metric">
+          <div class="metric-label">Turnos Hoy</div>
+          <div class="metric-val" id="metric-hoy">0</div>
+        </div>
+        <div class="card card-metric">
+          <div class="metric-label">Atendidos</div>
+          <div class="metric-val" id="metric-atendidos">0</div>
+        </div>
+        <div class="card card-metric">
+          <div class="metric-label">Pendientes</div>
+          <div class="metric-val" id="metric-pendientes">0</div>
+        </div>
+      </div>
+
+      <div class="panel-data">
+        <h3>📋 Pacientes citados para hoy</h3>
+        <div class="table-container">
+          <table class="tabla-hc">
+            <thead>
+              <tr><th>Hora</th><th>Paciente</th><th>DNI</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tabla-doctor-agenda"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB: MIS PACIENTES -->
+    <div id="sub-pacientes" class="subseccion-dash">
+      <div class="panel-data">
+        <h3>👥 Fichero general de pacientes</h3>
+        <div class="table-container">
+          <table class="tabla-hc">
+            <thead>
+              <tr><th>Paciente</th><th>DNI</th><th>Edad</th><th>Última Visita</th><th>Historial</th></tr>
+            </thead>
+            <tbody id="tabla-doctor-pacientes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB: CALENDARIO Y HORARIOS -->
+    <div id="sub-calendario" class="subseccion-dash">
+      <div class="panel-data">
+        <h3>📅 Configurar disponibilidad</h3>
+        <p style="color: var(--texto-s); font-size: 14px; margin-bottom: 20px">
+          Tocá los días para marcarlos como <strong style="color: var(--verde)">disponibles (verde)</strong> o <strong style="color: #9ca3af">no disponibles (gris)</strong>. Luego seleccioná los horarios que atenderás.
+        </p>
+
+        <div style="margin-bottom: 20px">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Junio 2026</label>
+          <div class="calendario-mes" id="calendario-mes"></div>
+        </div>
+
+        <div style="margin-bottom: 20px">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Horarios de atención</label>
+          <div class="horarios-editor" id="horarios-editor"></div>
+        </div>
+
+        <button class="btn btn-prim" onclick="subirCalendario()" style="padding: 12px 32px; font-size: 15px">
+          ⬆️ Subir calendario y horarios
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initDashboard } from '../js/dashboard-common.js'
+
+  // ── DATOS MOCK ──
+  let usuarioLogueado = null
+  let turnosHoy = [
+    { id: 't1', hora: '09:30', paciente: 'Tomás Gómez', dni: '54112233', tipo: 'Control pediátrico', estado: 'pendiente' },
+    { id: 't2', hora: '11:00', paciente: 'Martina López', dni: '49334455', tipo: 'Consulta por fiebre', estado: 'pendiente' },
+    { id: 't3', hora: '15:30', paciente: 'Lucas Fernández', dni: '51223344', tipo: 'Control de crecimiento', estado: 'pendiente' }
+  ]
+  let pacientes = [
+    { nombre: 'Tomás Gómez', dni: '54112233', edad: '6 años', ultimaVisita: '2026-03-12' },
+    { nombre: 'Martina López', dni: '49334455', edad: '8 años', ultimaVisita: '2026-01-20' },
+    { nombre: 'Lucas Fernández', dni: '51223344', edad: '4 años', ultimaVisita: '2026-05-15' },
+    { nombre: 'Sofía Martínez', dni: '50112233', edad: '10 años', ultimaVisita: '2026-04-02' }
+  ]
+  let diasDisponibles = {}
+  let horariosDisponibles = ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30']
+  let horariosActivos = [...horariosDisponibles]
+  let turnoAtendiendo = null
+
+  // ── INICIALIZACIÓN ──
+  async function init() {
+    const perfil = await initDashboard('doctor')
+    if (!perfil) return
+    usuarioLogueado = perfil
+
+    pintarAgenda()
+    pintarPacientes()
+    pintarCalendarioEditor()
+    pintarHorariosEditor()
+    actualizarMetricas()
+
+    if (window.innerWidth < 769) {
+      document.querySelectorAll('.table-container').forEach(c => c.classList.add('table-cards'))
+    }
+  }
+  init()
+
+  // ── AGENDA ──
+  function pintarAgenda() {
+    const tbody = document.getElementById('tabla-doctor-agenda')
+    tbody.innerHTML = turnosHoy.map(t => {
+      let estadoHtml = ''
+      let accionesHtml = ''
+
+      if (t.estado === 'pendiente') {
+        estadoHtml = '<span class="estado-badge pendiente">● Pendiente</span>'
+        accionesHtml = `<button class="btn btn-prim btn-sm" onclick="atenderPaciente('${t.id}')">🩺 Atender</button>`
+      } else if (t.estado === 'atendiendo') {
+        estadoHtml = '<span class="estado-badge atendiendo">⏳ Atendiendo</span>'
+        accionesHtml = `<button class="btn btn-warn btn-sm" onclick="finalizarAtencion('${t.id}')">🔴 Finalizar</button>`
+      } else {
+        estadoHtml = '<span class="estado-badge finalizado">✓ Finalizado</span>'
+        accionesHtml = '<span style="color:var(--texto-s); font-size:13px">Completado</span>'
+      }
+
+      return `<tr>
+        <td data-label="Hora"><strong>${t.hora} hs</strong></td>
+        <td data-label="Paciente">${t.paciente}</td>
+        <td data-label="DNI">${t.dni}</td>
+        <td data-label="Tipo">${t.tipo}</td>
+        <td data-label="Estado">${estadoHtml}</td>
+        <td data-label="Acciones">${accionesHtml}</td>
+      </tr>`
+    }).join('')
+  }
+
+  window.atenderPaciente = function(id) {
+    const turno = turnosHoy.find(t => t.id === id)
+    turno.estado = 'atendiendo'
+    turnoAtendiendo = turno
+    mostrarPush('warn', 'Avisando...', `Iniciando atención de ${turno.paciente}.`,
+      '<button class="btn btn-warn" onclick="cerrarPush()">Entendido</button>')
+    pintarAgenda()
+    actualizarMetricas()
+  }
+
+  window.finalizarAtencion = function(id) {
+    mostrarPush('warn', '¿Finalizar consulta?', '¿Estás seguro de que querés finalizar la atención?',
+      `<button class="btn btn-sec" onclick="cerrarPush()">No, volver</button><button class="btn btn-peligro" onclick="confirmarFinalizar('${id}')">Sí, finalizar</button>`)
+  }
+
+  window.confirmarFinalizar = function(id) {
+    cerrarPush()
+    document.getElementById('modal-historial-paciente').textContent = turnoAtendiendo?.paciente || 'Paciente'
+    document.getElementById('modal-historial').classList.add('activo')
+  }
+
+  window.cerrarModalHistorial = function() {
+    document.getElementById('modal-historial').classList.remove('activo')
+  }
+
+  window.guardarHistorial = function(e) {
+    e.preventDefault()
+    const diagnostico = document.getElementById('h-diagnostico').value
+    const tratamiento = document.getElementById('h-tratamiento').value
+
+    if (!diagnostico) {
+      mostrarPush('err', 'Faltan datos', 'Ingresá al menos el diagnóstico.')
+      return
+    }
+
+    if (turnoAtendiendo) turnoAtendiendo.estado = 'finalizado'
+
+    cerrarModalHistorial()
+    document.getElementById('h-diagnostico').value = ''
+    document.getElementById('h-tratamiento').value = ''
+
+    pintarAgenda()
+    actualizarMetricas()
+    mostrarPush('ok', '¡Atención finalizada!', 'El historial médico fue actualizado y la consulta fue marcada como completada.')
+    turnoAtendiendo = null
+  }
+
+  function actualizarMetricas() {
+    document.getElementById('metric-hoy').textContent = turnosHoy.length
+    document.getElementById('metric-atendidos').textContent = turnosHoy.filter(t => t.estado === 'finalizado').length
+    document.getElementById('metric-pendientes').textContent = turnosHoy.filter(t => t.estado === 'pendiente').length
+  }
+
+  // ── PACIENTES ──
+  function pintarPacientes() {
+    const tbody = document.getElementById('tabla-doctor-pacientes')
+    tbody.innerHTML = pacientes.map(p => `
+      <tr>
+        <td data-label="Paciente"><strong>${p.nombre}</strong></td>
+        <td data-label="DNI">${p.dni}</td>
+        <td data-label="Edad">${p.edad}</td>
+        <td data-label="Última Visita">${p.ultimaVisita}</td>
+        <td data-label="Historial"><button class="btn btn-sec btn-sm" onclick="verHistorialPaciente('${p.dni}')">👁️ Ver</button></td>
+      </tr>
+    `).join('')
+  }
+  window.verHistorialPaciente = function(dni) {
+    const p = pacientes.find(x => x.dni === dni)
+    mostrarPush('ok', `Historial de ${p.nombre}`, `DNI: ${p.dni} · Edad: ${p.edad} · Última visita: ${p.ultimaVisita}`)
+  }
+
+  // ── CALENDARIO EDITOR ──
+  function pintarCalendarioEditor() {
+    const grid = document.getElementById('calendario-mes')
+    const diasSem = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+    let html = diasSem.map(d => `<div class="cal-header">${d}</div>`).join('')
+
+    const hoy = new Date()
+    const primerDia = new Date(2026, 5, 1)
+    const diaInicio = primerDia.getDay()
+
+    for (let i = 0; i < diaInicio; i++) html += '<div></div>'
+
+    for (let d = 1; d <= 30; d++) {
+      const fecha = new Date(2026, 5, d)
+      const esPasado = fecha < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+      const fechaStr = `2026-06-${String(d).padStart(2,'0')}`
+      const estado = diasDisponibles[fechaStr] || (esPasado ? 'pasado' : 'disponible')
+
+      let clase = 'cal-dia-editor'
+      if (estado === 'disponible') clase += ' disponible'
+      else if (estado === 'ocupado') clase += ' ocupado'
+      else if (estado === 'pasado') clase += ' pasado'
+
+      const estadoTexto = estado === 'disponible' ? 'Disponible' : estado === 'ocupado' ? 'No disp.' : ''
+
+      html += `<div class="${clase}" id="dia-ed-${fechaStr}" onclick="toggleDia('${fechaStr}', ${!esPasado})">
+        <div class="cal-num">${d}</div>
+        <div class="cal-estado">${estadoTexto}</div>
+      </div>`
+    }
+    grid.innerHTML = html
+  }
+
+  window.toggleDia = function(fecha, editable) {
+    if (!editable) return
+    const actual = diasDisponibles[fecha] || 'disponible'
+    diasDisponibles[fecha] = actual === 'disponible' ? 'ocupado' : 'disponible'
+    pintarCalendarioEditor()
+  }
+
+  // ── HORARIOS EDITOR ──
+  function pintarHorariosEditor() {
+    const grid = document.getElementById('horarios-editor')
+    grid.innerHTML = horariosDisponibles.map(h => {
+      const activo = horariosActivos.includes(h)
+      let clase = 'hora-editor'
+      if (activo) clase += ' activo'
+      else clase += ' eliminado'
+      return `<div class="${clase}" onclick="toggleHora('${h}')">${h} hs</div>`
+    }).join('')
+  }
+
+  window.toggleHora = function(hora) {
+    if (horariosActivos.includes(hora)) {
+      horariosActivos = horariosActivos.filter(h => h !== hora)
+    } else {
+      horariosActivos.push(hora)
+      horariosActivos.sort()
+    }
+    pintarHorariosEditor()
+  }
+
+  window.subirCalendario = function() {
+    const diasDisp = Object.entries(diasDisponibles).filter(([k,v]) => v === 'disponible').length
+    mostrarPush('ok', '¡Calendario actualizado!',
+      `Se guardaron ${diasDisp} días disponibles y ${horariosActivos.length} horarios de atención.`)
+  }
+</script>
+</body>
+</html>

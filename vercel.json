@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "name": "healthcare-pediatria",
+  "builds": [
+    {
+      "src": "**/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "css/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "js/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/login",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/dashboard/admin",
+      "dest": "/dashboard/admin.html"
+    },
+    {
+      "src": "/dashboard/doctor",
+      "dest": "/dashboard/doctor.html"
+    },
+    {
+      "src": "/dashboard/paciente",
+      "dest": "/dashboard/paciente.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}

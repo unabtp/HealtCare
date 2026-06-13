@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
+  <title>Panel Paciente · HealthCare Pediatría</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    /* ── ESTILOS ESPECÍFICOS PACIENTE ── */
+    /* Solo lo que NO está en los CSS compartidos */
+
+    .doc-card {
+      background: var(--blanco);
+      border: 2px solid var(--borde);
+      border-radius: var(--radio-lg);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .doc-card:hover { border-color: var(--verde-mid); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,122,94,.1); }
+    .doc-card.seleccionado { border-color: var(--verde); background: var(--verde-claro); }
+    .doc-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--verde-claro); display: flex;
+      align-items: center; justify-content: center;
+      font-size: 32px; margin: 0 auto 12px;
+    }
+    .doc-nombre { font-weight: 600; font-size: 14px; color: var(--texto); margin-bottom: 4px; }
+    .doc-espec { font-size: 12px; color: var(--texto-s); }
+
+    .calendario-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .cal-dia {
+      aspect-ratio: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--blanco); border: 1.5px solid var(--borde);
+      border-radius: 12px; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all .2s;
+    }
+    .cal-dia:hover { border-color: var(--verde); }
+    .cal-dia.disponible { background: var(--verde-claro); border-color: var(--verde-mid); color: var(--verde); }
+    .cal-dia.ocupado { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+    .cal-dia.seleccionado { background: var(--verde); color: var(--blanco); border-color: var(--verde); }
+    .cal-dia-nombre { font-size: 10px; text-transform: uppercase; opacity: .7; margin-bottom: 2px; }
+    .cal-dia-numero { font-size: 18px; font-family: var(--font-titulo); }
+
+    .horarios-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .hora-chip {
+      padding: 8px 18px; border-radius: 20px; border: 1.5px solid var(--borde);
+      background: var(--blanco); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all .2s;
+    }
+    .hora-chip:hover { border-color: var(--verde); }
+    .hora-chip.seleccionado { background: var(--verde); color: var(--blanco); border-color: var(--verde); }
+    .hora-chip.ocupado { background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb; cursor: not-allowed; }
+
+    .pacientes-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .pac-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      background: var(--blanco); border: 1.5px solid var(--borde);
+      border-radius: 12px; cursor: pointer; transition: all .2s;
+    }
+    .pac-item:hover { border-color: var(--verde); }
+    .pac-item.seleccionado { border-color: var(--verde); background: var(--verde-claro); }
+    .pac-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--verde-claro); display: flex;
+      align-items: center; justify-content: center; font-size: 20px;
+    }
+    .pac-info { flex: 1; }
+    .pac-nombre { font-weight: 600; font-size: 14px; }
+    .pac-datos { font-size: 12px; color: var(--texto-s); }
+
+    .ficha-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .ficha-item { background: var(--crema); border: 1px solid var(--borde); border-radius: 12px; padding: 16px; }
+    .ficha-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--texto-s); margin-bottom: 4px; }
+    .ficha-valor { font-size: 16px; font-weight: 600; color: var(--texto); }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.4);
+      z-index: 1000; display: none; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); padding: var(--content-pad);
+    }
+    .modal-overlay.activo { display: flex; }
+    .modal-box {
+      background: var(--blanco); border-radius: var(--radio-xl);
+      padding: 32px; max-width: 480px; width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,.15);
+    }
+    .modal-box h3 { font-family: var(--font-titulo); font-size: 22px; margin-bottom: 20px; }
+
+    .doctores-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+
+    @media (min-width: 769px) {
+      .doctores-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      .ficha-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- MOBILE HEADER -->
+<div class="dash-mobile-header">
+  <div class="logo">Health<span>Care</span></div>
+  <button class="dash-mobile-toggle" id="menu-toggle" aria-label="Abrir menú">☰</button>
+</div>
+
+<!-- MOBILE SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="sidebar-mobile" id="sidebar-mobile">
+  <div>
+    <div class="sidebar-brand">Health<span>Care</span></div>
+    <div class="sidebar-logo">🏥 Pediatría</div>
+    <ul class="sidebar-menu">
+      <li class="sidebar-item active" onclick="cambiarSubseccion('inicio'); cerrarSidebar()">📅 Mis Turnos</li>
+      <li class="sidebar-item" onclick="cambiarSubseccion('historial'); cerrarSidebar()">📋 Ficha Clínica</li>
+      <li class="sidebar-item" onclick="cambiarSubseccion('perfil'); cerrarSidebar()">⚙️ Configurar Perfil</li>
+    </ul>
+  </div>
+  <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+</div>
+
+<!-- BOTÓN RETROCEDER -->
+<button class="btn-retroceder" onclick="window.location.href='../index.html'">Volver al inicio</button>
+
+<!-- MODAL NUEVO PACIENTE -->
+<div class="modal-overlay" id="modal-nuevo-paciente">
+  <div class="modal-box">
+    <h3>👶 Agregar nuevo paciente</h3>
+    <form onsubmit="guardarNuevoPaciente(event)">
+      <div class="campo" style="margin-bottom:14px">
+        <label>Nombre completo del niño/a</label>
+        <div class="input-wrap">
+          <span class="input-ico">👶</span>
+          <input type="text" id="np-nombre" required placeholder="Ej: Martina López">
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:14px">
+        <label>Fecha de nacimiento</label>
+        <div class="input-wrap">
+          <span class="input-ico">📅</span>
+          <input type="date" id="np-nacimiento" required>
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:20px">
+        <label>DNI</label>
+        <div class="input-wrap">
+          <span class="input-ico">🪪</span>
+          <input type="text" id="np-dni" required placeholder="12345678" maxlength="8">
+        </div>
+      </div>
+      <div style="display:flex; gap:10px">
+        <button type="button" class="btn btn-sec" onclick="cerrarModal()" style="flex:1">Cancelar</button>
+        <button type="submit" class="btn btn-prim" style="flex:1">Guardar paciente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="dashboard-layout">
+  <!-- DESKTOP SIDEBAR -->
+  <div class="sidebar">
+    <div>
+      <div class="sidebar-brand">Health<span>Care</span></div>
+      <div class="sidebar-logo">🏥 Pediatría</div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-item active" onclick="cambiarSubseccion('inicio')">📅 Mis Turnos</li>
+        <li class="sidebar-item" onclick="cambiarSubseccion('historial')">📋 Ficha Clínica</li>
+        <li class="sidebar-item" onclick="cambiarSubseccion('perfil')">⚙️ Configurar Perfil</li>
+      </ul>
+    </div>
+    <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="dash-header">
+      <div class="dash-header-info">
+        <span class="badge badge-paciente">Paciente Activo</span>
+        <h1 class="dash-titulo" id="saludo-usuario">¡Hola!</h1>
+      </div>
+      <div class="dash-header-meta">
+        <strong id="perfil-nombre">-</strong><br>DNI: <span id="perfil-dni">-</span>
+      </div>
+    </div>
+
+    <!-- SUB: INICIO / TURNOS -->
+    <div id="sub-inicio" class="subseccion-dash activa">
+      <div class="metrics-grid">
+        <div class="card card-metric">
+          <div class="metric-label">Turnos Reservados</div>
+          <div class="metric-val" id="metric-turnos">0</div>
+        </div>
+        <div class="card card-metric">
+          <div class="metric-label">Consultas Anuales</div>
+          <div class="metric-val" id="metric-consultas">0</div>
+        </div>
+      </div>
+
+      <!-- AGENDAR TURNO -->
+      <div class="panel-data">
+        <h3>🗓️ Agendar nuevo turno pediátrico</h3>
+
+        <!-- Seleccionar Paciente -->
+        <div style="margin-bottom: 20px">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Paciente</label>
+          <div class="pacientes-lista" id="lista-pacientes"></div>
+          <button class="btn btn-sec" onclick="abrirModalPaciente()">+ Agregar nuevo paciente</button>
+        </div>
+
+        <!-- Seleccionar Doctor -->
+        <div style="margin-bottom: 20px">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Especialista</label>
+          <div class="doctores-grid" id="doctores-grid"></div>
+        </div>
+
+        <!-- Calendario -->
+        <div id="calendario-container" style="margin-bottom: 20px; display:none">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Seleccionar día</label>
+          <div class="calendario-grid" id="calendario-grid"></div>
+        </div>
+
+        <!-- Horarios -->
+        <div id="horarios-container" style="margin-bottom: 20px; display:none">
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Horario disponible</label>
+          <div class="horarios-grid" id="horarios-grid"></div>
+        </div>
+
+        <button class="btn btn-prim btn-full" id="btn-confirmar-turno" onclick="confirmarTurno()" disabled>
+          Confirmar turno
+        </button>
+      </div>
+
+      <!-- TURNOS EXISTENTES -->
+      <div class="panel-data">
+        <h3>📋 Próximos turnos programados</h3>
+        <div class="table-container">
+          <table class="tabla-hc" id="tabla-turnos">
+            <thead>
+              <tr><th>Paciente</th><th>Especialista</th><th>Fecha</th><th>Hora</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody id="tabla-paciente-turnos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB: HISTORIAL / FICHA CLÍNICA -->
+    <div id="sub-historial" class="subseccion-dash">
+      <div class="panel-data">
+        <h3>👨‍⚕️ Seleccionar paciente para ver ficha clínica</h3>
+        <div class="pacientes-lista" id="lista-pacientes-historial"></div>
+      </div>
+
+      <div id="ficha-clinica-panel" style="display:none">
+        <div class="panel-data">
+          <h3>📋 Ficha médica del paciente</h3>
+          <div class="ficha-grid" id="ficha-medica-grid"></div>
+        </div>
+
+        <div class="panel-data">
+          <h3>📖 Historial de consultas</h3>
+          <div class="table-container">
+            <table class="tabla-hc">
+              <thead>
+                <tr><th>Fecha</th><th>Profesional</th><th>Diagnóstico / Control</th><th>Tratamiento / Receta</th><th>Constancia</th></tr>
+              </thead>
+              <tbody id="tabla-historial-clinico"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB: PERFIL -->
+    <div id="sub-perfil" class="subseccion-dash">
+      <div class="panel-data" style="max-width: 500px;">
+        <h3>⚙️ Configurar perfil</h3>
+
+        <div style="margin-bottom: 24px">
+          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar contraseña</h4>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Contraseña actual</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="p-pass-actual" placeholder="Contraseña actual">
+            </div>
+          </div>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Nueva contraseña</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="p-pass-nueva" placeholder="Mínimo 8 caracteres">
+            </div>
+          </div>
+          <button class="btn btn-prim" onclick="cambiarPassword()">Actualizar contraseña</button>
+        </div>
+
+        <div style="margin-bottom: 24px; border-top: 1px solid var(--borde); padding-top: 24px">
+          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar email</h4>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Nuevo email</label>
+            <div class="input-wrap">
+              <span class="input-ico">✉️</span>
+              <input type="email" id="p-email-nuevo" placeholder="nuevo@email.com">
+            </div>
+          </div>
+          <button class="btn btn-prim" onclick="cambiarEmail()">Actualizar email</button>
+        </div>
+
+        <div style="border-top: 1px solid var(--borde); padding-top: 24px">
+          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar teléfono</h4>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Teléfono</label>
+            <div class="input-wrap">
+              <span class="input-ico">📞</span>
+              <input type="tel" id="p-telefono" placeholder="+54 11 4000-0000">
+            </div>
+          </div>
+          <button class="btn btn-prim" onclick="cambiarTelefono()">Actualizar teléfono</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initDashboard } from '../js/dashboard-common.js'
+
+  // ── DATOS MOCK ──
+  let usuarioLogueado = null
+  let pacientesRegistrados = [
+    { id: 'p1', nombre: 'Tomás Gómez', nacimiento: '2020-03-15', dni: '54112233', tipoSangre: 'O+', altura: '105cm', alergias: 'Ninguna', edad: '6 años' },
+    { id: 'p2', nombre: 'Martina López', nacimiento: '2018-07-22', dni: '49334455', tipoSangre: 'A+', altura: '120cm', alergias: 'Penicilina', edad: '8 años' }
+  ]
+  let doctores = [
+    { id: 'd1', nombre: 'Dr. Carlos Bianchi', especialidad: 'Pediatría General', sexo: 'M', avatar: '👨‍⚕️',
+      dias: [1,2,3,4,5], horarios: ['09:00','09:30','10:00','10:30','11:00','15:00','15:30','16:00'] },
+    { id: 'd2', nombre: 'Dra. Sofía Martínez', especialidad: 'Neonatología', sexo: 'F', avatar: '👩‍⚕️',
+      dias: [1,3,5], horarios: ['08:30','09:00','09:30','10:00','14:00','14:30','15:00'] },
+    { id: 'd3', nombre: 'Dr. Martín Rodríguez', especialidad: 'Cardiología Pediátrica', sexo: 'M', avatar: '👨‍⚕️',
+      dias: [2,4], horarios: ['10:00','10:30','11:00','11:30','16:00','16:30','17:00'] },
+    { id: 'd4', nombre: 'Dra. Luciana Fernández', especialidad: 'Neumonología Infantil', sexo: 'F', avatar: '👩‍⚕️',
+      dias: [1,2,4,5], horarios: ['09:00','09:30','10:00','11:00','15:30','16:00','16:30'] },
+    { id: 'd5', nombre: 'Dr. Nahuel Salazar', especialidad: 'Infectología Pediátrica', sexo: 'M', avatar: '👨‍⚕️',
+      dias: [3,5], horarios: ['08:00','08:30','09:00','09:30','14:00','14:30','15:00'] }
+  ]
+  let turnosExistentes = [
+    { id: 't1', pacienteId: 'p1', pacienteNombre: 'Tomás Gómez', doctorId: 'd1', doctorNombre: 'Dr. Carlos Bianchi', fecha: '2026-06-10', hora: '09:30', estado: 'Confirmado' },
+    { id: 't2', pacienteId: 'p2', pacienteNombre: 'Martina López', doctorId: 'd2', doctorNombre: 'Dra. Sofía Martínez', fecha: '2026-06-12', hora: '11:00', estado: 'Confirmado' }
+  ]
+  let historialClinico = [
+    { id: 'h1', pacienteId: 'p1', fecha: '2026-03-12', profesional: 'Dr. Carlos Bianchi', diagnostico: 'Control de niño sano - 6 años. Desarrollo correcto.', tratamiento: 'Esquema vacunas al día. Próximo control en 6 meses.', tipo: 'control' },
+    { id: 'h2', pacienteId: 'p2', fecha: '2026-01-20', profesional: 'Dra. Sofía Martínez', diagnostico: 'Cuadro bronquial obstructivo leve.', tratamiento: 'Salbutamol aerosol cada 8hs por 5 días.', tipo: 'consulta' },
+    { id: 'h3', pacienteId: 'p1', fecha: '2025-09-15', profesional: 'Dr. Carlos Bianchi', diagnostico: 'Control anual. Peso y talla dentro de percentiles normales.', tratamiento: 'Continuar alimentación balanceada. Control en 6 meses.', tipo: 'control' }
+  ]
+
+  let doctorSeleccionado = null
+  let diaSeleccionado = null
+  let horaSeleccionada = null
+  let pacienteSeleccionado = null
+  let pacienteHistorialSeleccionado = null
+
+  // ── INICIALIZACIÓN ──
+  async function init() {
+    const perfil = await initDashboard('paciente')
+    if (!perfil) return
+    usuarioLogueado = perfil
+
+    pintarDoctores()
+    pintarPacientes()
+    pintarPacientesHistorial()
+    pintarTurnos()
+    actualizarMetricas()
+
+    // Activar modo cards en mobile para tablas
+    if (window.innerWidth < 769) {
+      document.querySelectorAll('.table-container').forEach(c => c.classList.add('table-cards'))
+    }
+  }
+  init()
+
+  // ── MODAL ──
+  window.abrirModalPaciente = function() {
+    document.getElementById('modal-nuevo-paciente').classList.add('activo')
+  }
+  window.cerrarModal = function() {
+    document.getElementById('modal-nuevo-paciente').classList.remove('activo')
+  }
+  window.guardarNuevoPaciente = function(e) {
+    e.preventDefault()
+    const nombre = document.getElementById('np-nombre').value.trim()
+    const nacimiento = document.getElementById('np-nacimiento').value
+    const dni = document.getElementById('np-dni').value.trim()
+
+    pacientesRegistrados.push({
+      id: 'p' + (pacientesRegistrados.length + 1),
+      nombre, nacimiento, dni,
+      tipoSangre: 'No especificado', altura: 'No especificado', alergias: 'Ninguna', edad: calcularEdad(nacimiento)
+    })
+
+    cerrarModal()
+    e.target.reset()
+    pintarPacientes()
+    pintarPacientesHistorial()
+    mostrarPush('ok', '¡Paciente agregado!', `${nombre} fue registrado correctamente.`)
+  }
+
+  function calcularEdad(fecha) {
+    const hoy = new Date()
+    const nac = new Date(fecha)
+    let edad = hoy.getFullYear() - nac.getFullYear()
+    const m = hoy.getMonth() - nac.getMonth()
+    if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--
+    return edad + ' años'
+  }
+
+  // ── DOCTORES ──
+  function pintarDoctores() {
+    const grid = document.getElementById('doctores-grid')
+    grid.innerHTML = doctores.map(d => `
+      <div class="doc-card" id="doc-${d.id}" onclick="seleccionarDoctor('${d.id}')">
+        <div class="doc-avatar">${d.avatar}</div>
+        <div class="doc-nombre">${d.nombre}</div>
+        <div class="doc-espec">${d.especialidad}</div>
+      </div>
+    `).join('')
+  }
+  window.seleccionarDoctor = function(id) {
+    doctorSeleccionado = doctores.find(d => d.id === id)
+    document.querySelectorAll('.doc-card').forEach(c => c.classList.remove('seleccionado'))
+    document.getElementById('doc-' + id).classList.add('seleccionado')
+    pintarCalendario()
+    document.getElementById('calendario-container').style.display = 'block'
+    document.getElementById('horarios-container').style.display = 'none'
+    diaSeleccionado = null
+    horaSeleccionada = null
+    document.getElementById('btn-confirmar-turno').disabled = true
+  }
+
+  // ── CALENDARIO ──
+  function pintarCalendario() {
+    const grid = document.getElementById('calendario-grid')
+    const hoy = new Date()
+    const diasSemana = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+    let html = ''
+
+    for (let i = 0; i < 14; i++) {
+      const fecha = new Date(hoy)
+      fecha.setDate(hoy.getDate() + i)
+      const diaSem = fecha.getDay()
+      const diaNum = fecha.getDate()
+      const mes = fecha.getMonth() + 1
+      const fechaStr = `${fecha.getFullYear()}-${String(mes).padStart(2,'0')}-${String(diaNum).padStart(2,'0')}`
+
+      const disponible = doctorSeleccionado.dias.includes(diaSem)
+      const ocupado = turnosExistentes.filter(t => t.doctorId === doctorSeleccionado.id && t.fecha === fechaStr).length >= 3
+      let clase = 'cal-dia'
+      if (!disponible) clase += ' ocupado'
+      else if (ocupado) clase += ' ocupado'
+      else clase += ' disponible'
+
+      html += `<div class="${clase}" id="dia-${fechaStr}" onclick="seleccionarDia('${fechaStr}', ${disponible && !ocupado})">
+        <div class="cal-dia-nombre">${diasSemana[diaSem]}</div>
+        <div class="cal-dia-numero">${diaNum}</div>
+      </div>`
+    }
+    grid.innerHTML = html
+  }
+  window.seleccionarDia = function(fecha, disponible) {
+    if (!disponible) return
+    diaSeleccionado = fecha
+    document.querySelectorAll('.cal-dia').forEach(c => c.classList.remove('seleccionado'))
+    document.getElementById('dia-' + fecha).classList.add('seleccionado')
+    pintarHorarios()
+    document.getElementById('horarios-container').style.display = 'block'
+  }
+
+  // ── HORARIOS ──
+  function pintarHorarios() {
+    const grid = document.getElementById('horarios-grid')
+    const ocupados = turnosExistentes.filter(t => t.doctorId === doctorSeleccionado.id && t.fecha === diaSeleccionado).map(t => t.hora)
+
+    grid.innerHTML = doctorSeleccionado.horarios.map(h => {
+      const ocupado = ocupados.includes(h)
+      let clase = 'hora-chip'
+      if (ocupado) clase += ' ocupado'
+      return `<div class="${clase}" id="hora-${h.replace(':','')}" onclick="seleccionarHora('${h}', ${!ocupado})">${h} hs</div>`
+    }).join('')
+  }
+  window.seleccionarHora = function(hora, disponible) {
+    if (!disponible) return
+    horaSeleccionada = hora
+    document.querySelectorAll('.hora-chip').forEach(c => c.classList.remove('seleccionado'))
+    document.getElementById('hora-' + hora.replace(':','')).classList.add('seleccionado')
+    document.getElementById('btn-confirmar-turno').disabled = false
+  }
+
+  // ── PACIENTES ──
+  function pintarPacientes() {
+    const lista = document.getElementById('lista-pacientes')
+    lista.innerHTML = pacientesRegistrados.map(p => `
+      <div class="pac-item" id="pac-${p.id}" onclick="seleccionarPaciente('${p.id}')">
+        <div class="pac-avatar">👶</div>
+        <div class="pac-info">
+          <div class="pac-nombre">${p.nombre}</div>
+          <div class="pac-datos">DNI: ${p.dni} · ${p.edad}</div>
+        </div>
+      </div>
+    `).join('')
+  }
+  window.seleccionarPaciente = function(id) {
+    pacienteSeleccionado = pacientesRegistrados.find(p => p.id === id)
+    document.querySelectorAll('.pac-item').forEach(c => c.classList.remove('seleccionado'))
+    document.getElementById('pac-' + id).classList.add('seleccionado')
+  }
+
+  function pintarPacientesHistorial() {
+    const lista = document.getElementById('lista-pacientes-historial')
+    lista.innerHTML = pacientesRegistrados.map(p => `
+      <div class="pac-item" id="pac-h-${p.id}" onclick="seleccionarPacienteHistorial('${p.id}')">
+        <div class="pac-avatar">👶</div>
+        <div class="pac-info">
+          <div class="pac-nombre">${p.nombre}</div>
+          <div class="pac-datos">DNI: ${p.dni} · ${p.edad}</div>
+        </div>
+      </div>
+    `).join('')
+  }
+  window.seleccionarPacienteHistorial = function(id) {
+    pacienteHistorialSeleccionado = pacientesRegistrados.find(p => p.id === id)
+    document.querySelectorAll('#lista-pacientes-historial .pac-item').forEach(c => c.classList.remove('seleccionado'))
+    document.getElementById('pac-h-' + id).classList.add('seleccionado')
+    document.getElementById('ficha-clinica-panel').style.display = 'block'
+    pintarFichaMedica()
+    pintarHistorialClinico()
+  }
+
+  function pintarFichaMedica() {
+    const p = pacienteHistorialSeleccionado
+    document.getElementById('ficha-medica-grid').innerHTML = `
+      <div class="ficha-item"><div class="ficha-label">Nombre y apellido</div><div class="ficha-valor">${p.nombre}</div></div>
+      <div class="ficha-item"><div class="ficha-label">DNI</div><div class="ficha-valor">${p.dni}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Edad</div><div class="ficha-valor">${p.edad}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Fecha de nacimiento</div><div class="ficha-valor">${p.nacimiento}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Tipo de sangre</div><div class="ficha-valor">${p.tipoSangre}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Altura</div><div class="ficha-valor">${p.altura}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Alergias</div><div class="ficha-valor">${p.alergias}</div></div>
+    `
+  }
+
+  function pintarHistorialClinico() {
+    const historial = historialClinico.filter(h => h.pacienteId === pacienteHistorialSeleccionado.id)
+    const tbody = document.getElementById('tabla-historial-clinico')
+
+    if (!historial.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--texto-s)">No hay consultas registradas.</td></tr>'
+      return
+    }
+
+    tbody.innerHTML = historial.map(h => `
+      <tr>
+        <td>${h.fecha}</td>
+        <td>${h.profesional}</td>
+        <td>${h.diagnostico}</td>
+        <td>${h.tratamiento}</td>
+        <td><button class="btn btn-warn btn-sm" onclick="descargarConstancia('${h.id}')">📄 Descargar</button></td>
+      </tr>
+    `).join('')
+  }
+
+  // ── CONSTANCIA PDF ──
+  window.descargarConstancia = function(historialId) {
+    const h = historialClinico.find(x => x.id === historialId)
+    const p = pacientesRegistrados.find(x => x.id === h.pacienteId)
+
+    const contenido = `HEALTHCARE PEDIATRÍA
+Av. Corrientes 1234, Buenos Aires
+Tel: +54 11 4000-0000
+
+═══════════════════════════════════════
+
+           CONSTANCIA MÉDICA
+
+═══════════════════════════════════════
+
+Paciente: ${p.nombre}
+DNI: ${p.dni}
+Edad: ${p.edad}
+
+Fecha de consulta: ${h.fecha}
+Profesional: ${h.profesional}
+
+DIAGNÓSTICO:
+${h.diagnostico}
+
+TRATAMIENTO / RECETA:
+${h.tratamiento}
+
+═══════════════════════════════════════
+
+Firma digital del profesional:
+
+${h.profesional}
+MP: 12345 · MN: 67890
+
+HealthCare Pediatría - 2026`
+
+    const blob = new Blob([contenido], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Constancia_${p.nombre.replace(/ /g,'_')}_${h.fecha}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    mostrarPush('ok', 'Constancia descargada', `La constancia médica de ${p.nombre} fue descargada correctamente.`)
+  }
+
+  // ── CONFIRMAR TURNO ──
+  window.confirmarTurno = function() {
+    if (!pacienteSeleccionado || !doctorSeleccionado || !diaSeleccionado || !horaSeleccionada) {
+      mostrarPush('err', 'Faltan datos', 'Seleccioná el paciente, doctor, día y horario.')
+      return
+    }
+
+    turnosExistentes.push({
+      id: 't' + (turnosExistentes.length + 1),
+      pacienteId: pacienteSeleccionado.id,
+      pacienteNombre: pacienteSeleccionado.nombre,
+      doctorId: doctorSeleccionado.id,
+      doctorNombre: doctorSeleccionado.nombre,
+      fecha: diaSeleccionado,
+      hora: horaSeleccionada,
+      estado: 'Confirmado'
+    })
+
+    pintarTurnos()
+    actualizarMetricas()
+    mostrarPush('ok', '¡Turno confirmado!',
+      `Turno agendado para ${pacienteSeleccionado.nombre} con ${doctorSeleccionado.nombre} el ${diaSeleccionado} a las ${horaSeleccionada} hs.`)
+
+    doctorSeleccionado = null; diaSeleccionado = null; horaSeleccionada = null; pacienteSeleccionado = null
+    document.querySelectorAll('.doc-card, .cal-dia, .hora-chip, .pac-item').forEach(c => c.classList.remove('seleccionado'))
+    document.getElementById('calendario-container').style.display = 'none'
+    document.getElementById('horarios-container').style.display = 'none'
+    document.getElementById('btn-confirmar-turno').disabled = true
+  }
+
+  // ── TURNOS ──
+  function pintarTurnos() {
+    const tbody = document.getElementById('tabla-paciente-turnos')
+    const filtrados = turnosExistentes.filter(t => {
+      const pacienteIds = pacientesRegistrados.map(p => p.id)
+      return pacienteIds.includes(t.pacienteId)
+    })
+
+    if (!filtrados.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--texto-s)">No tenés turnos programados.</td></tr>'
+      return
+    }
+
+    tbody.innerHTML = filtrados.map(t => `
+      <tr>
+        <td data-label="Paciente"><strong>${t.pacienteNombre}</strong></td>
+        <td data-label="Especialista">${t.doctorNombre}</td>
+        <td data-label="Fecha">${t.fecha}</td>
+        <td data-label="Hora">${t.hora} hs</td>
+        <td data-label="Estado"><span style="color:var(--ok)">● ${t.estado}</span></td>
+        <td data-label="Acciones"><button class="btn btn-peligro btn-sm" onclick="cancelarTurno('${t.id}')">Cancelar</button></td>
+      </tr>
+    `).join('')
+  }
+  window.cancelarTurno = function(id) {
+    mostrarPush('warn', '¿Cancelar turno?', '¿Estás seguro de que querés cancelar este turno?',
+      `<button class="btn btn-sec" onclick="cerrarPush()">No, volver</button><button class="btn btn-peligro" onclick="confirmarCancelar('${id}')">Sí, cancelar</button>`)
+  }
+  window.confirmarCancelar = function(id) {
+    turnosExistentes = turnosExistentes.filter(t => t.id !== id)
+    pintarTurnos()
+    actualizarMetricas()
+    cerrarPush()
+    mostrarPush('ok', 'Turno cancelado', 'El turno fue cancelado correctamente.')
+  }
+
+  function actualizarMetricas() {
+    const pacienteIds = pacientesRegistrados.map(p => p.id)
+    document.getElementById('metric-turnos').textContent = turnosExistentes.filter(t => pacienteIds.includes(t.pacienteId)).length
+    document.getElementById('metric-consultas').textContent = historialClinico.filter(h => pacienteIds.includes(h.pacienteId)).length
+  }
+
+  // ── PERFIL ──
+  window.cambiarPassword = function() {
+    const actual = document.getElementById('p-pass-actual').value
+    const nueva = document.getElementById('p-pass-nueva').value
+    if (!actual || !nueva || nueva.length < 8) {
+      mostrarPush('err', 'Error', 'La nueva contraseña debe tener al menos 8 caracteres.')
+      return
+    }
+    mostrarPush('ok', 'Contraseña actualizada', 'Tu contraseña fue cambiada correctamente.')
+    document.getElementById('p-pass-actual').value = ''
+    document.getElementById('p-pass-nueva').value = ''
+  }
+  window.cambiarEmail = function() {
+    const email = document.getElementById('p-email-nuevo').value
+    if (!email.includes('@')) {
+      mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
+      return
+    }
+    mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}.`)
+    document.getElementById('p-email-nuevo').value = ''
+  }
+  window.cambiarTelefono = function() {
+    const tel = document.getElementById('p-telefono').value
+    if (!tel) {
+      mostrarPush('err', 'Teléfono vacío', 'Ingresá un número de teléfono.')
+      return
+    }
+    mostrarPush('ok', 'Teléfono actualizado', `Tu teléfono fue cambiado a ${tel}.`)
+    document.getElementById('p-telefono').value = ''
+  }
+</script>
+</body>
+</html>

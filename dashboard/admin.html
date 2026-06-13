@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
+  <title>Panel Admin · HealthCare Pediatría</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    /* Dashboard Admin - Mobile First extras */
+    .sidebar-brand { font-family: var(--font-titulo); font-size: 22px; margin-bottom: 8px; }
+    .sidebar-brand span { color: var(--acento); }
+    .sidebar-logo { font-size: 13px; opacity: .7; margin-bottom: 40px; }
+    .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-item {
+      padding: 12px 16px;
+      border-radius: var(--radio-md);
+      color: rgba(255,255,255,.75);
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all .2s;
+      font-size: 14px;
+      min-height: var(--touch-min);
+    }
+    .sidebar-item:hover, .sidebar-item.active {
+      background: rgba(255,255,255,.15);
+      color: var(--blanco);
+    }
+
+    /* Mobile menu header */
+    .dash-mobile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px var(--content-pad);
+      background: var(--verde);
+      color: var(--blanco);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .dash-mobile-header .logo { font-family: var(--font-titulo); font-size: 20px; }
+    .dash-mobile-header .logo span { color: var(--acento); }
+    .dash-mobile-toggle {
+      background: none;
+      border: none;
+      color: var(--blanco);
+      font-size: 24px;
+      min-width: var(--touch-min);
+      min-height: var(--touch-min);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Mobile sidebar overlay */
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 90;
+      display: none;
+      backdrop-filter: blur(4px);
+    }
+    .sidebar-overlay.activo { display: block; }
+
+    .sidebar-mobile {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 280px;
+      background: var(--verde);
+      color: var(--blanco);
+      padding: 24px;
+      z-index: 95;
+      transform: translateX(-100%);
+      transition: transform .3s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-y: auto;
+    }
+    .sidebar-mobile.activo { transform: translateX(0); }
+
+    @media (min-width: 769px) {
+      .dash-mobile-header { display: none; }
+      .sidebar-overlay { display: none !important; }
+      .sidebar-mobile { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- MOBILE HEADER -->
+<div class="dash-mobile-header">
+  <div class="logo">Health<span>Care</span></div>
+  <button class="dash-mobile-toggle" id="menu-toggle" aria-label="Abrir menú">☰</button>
+</div>
+
+<!-- MOBILE SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="sidebar-mobile" id="sidebar-mobile">
+  <div>
+    <div class="sidebar-brand">Health<span>Care</span></div>
+    <div class="sidebar-logo">🏥 Pediatría</div>
+    <ul class="sidebar-menu">
+      <li class="sidebar-item active" onclick="cambiarSubseccion('global'); cerrarSidebar()">📊 Panel de Control</li>
+      <li class="sidebar-item" onclick="cambiarSubseccion('usuarios'); cerrarSidebar()">🥼 Gestionar Profesionales</li>
+    </ul>
+  </div>
+  <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+</div>
+
+<!-- BOTÓN RETROCEDER -->
+<button class="btn-retroceder" onclick="window.location.href='../index.html'">Volver al inicio</button>
+
+<div class="dashboard-layout">
+  <!-- DESKTOP SIDEBAR -->
+  <div class="sidebar">
+    <div>
+      <div class="sidebar-brand">Health<span>Care</span></div>
+      <div class="sidebar-logo">🏥 Pediatría</div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-item active" onclick="cambiarSubseccion('global')">📊 Panel de Control</li>
+        <li class="sidebar-item" onclick="cambiarSubseccion('usuarios')">🥼 Gestionar Profesionales</li>
+      </ul>
+    </div>
+    <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="dash-header">
+      <div class="dash-header-info">
+        <span class="badge badge-admin">Control Central</span>
+        <h1 class="dash-titulo" id="saludo-usuario">Consola de Administración</h1>
+      </div>
+      <div class="dash-header-meta">
+        <strong id="perfil-nombre">-</strong><br>DNI: <span id="perfil-dni">-</span>
+      </div>
+    </div>
+
+    <!-- SUB: PANEL GLOBAL -->
+    <div id="sub-global" class="subseccion-dash activa">
+      <div class="metrics-grid">
+        <div class="card card-metric">
+          <div class="metric-label">Usuarios Registrados</div>
+          <div class="metric-val" id="metric-usuarios">0</div>
+        </div>
+        <div class="card card-metric">
+          <div class="metric-label">Pacientes</div>
+          <div class="metric-val" id="metric-pacientes">0</div>
+        </div>
+        <div class="card card-metric">
+          <div class="metric-label">Doctores</div>
+          <div class="metric-val" id="metric-doctores">0</div>
+        </div>
+        <div class="card card-metric">
+          <div class="metric-label">Turnos Totales</div>
+          <div class="metric-val" id="metric-turnos">0</div>
+        </div>
+      </div>
+
+      <div class="panel-data">
+        <h3>👥 Auditoría de cuentas existentes</h3>
+        <div class="table-container">
+          <table class="tabla-hc" id="tabla-admin-usuarios">
+            <thead>
+              <tr><th>Nombre</th><th>DNI</th><th>Email</th><th>Rol</th><th>Estado</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB: GESTIONAR USUARIOS -->
+    <div id="sub-usuarios" class="subseccion-dash">
+      <div class="panel-data" style="max-width: 600px;">
+        <h3>🥼 Alta de personal médico o administrativo</h3>
+        <p>Creá una nueva cuenta con rol de <strong>Médico</strong> o <strong>Administración</strong>. Se enviará un email de confirmación para que el usuario establezca su contraseña.</p>
+        <form onsubmit="crearUsuarioAdmin(event)">
+          <div class="form-grid">
+            <div class="campo">
+              <label>Nombre</label>
+              <div class="input-wrap">
+                <span class="input-ico">👤</span>
+                <input type="text" id="adm-nombre" required placeholder="Dr. Marcelo">
+              </div>
+            </div>
+            <div class="campo">
+              <label>Apellido</label>
+              <div class="input-wrap">
+                <span class="input-ico">👤</span>
+                <input type="text" id="adm-apellido" required placeholder="González">
+              </div>
+            </div>
+          </div>
+          <div class="campo">
+            <label>DNI</label>
+            <div class="input-wrap">
+              <span class="input-ico">🪪</span>
+              <input type="text" id="adm-dni" required placeholder="18223344" maxlength="8">
+            </div>
+          </div>
+          <div class="campo">
+            <label>Email corporativo</label>
+            <div class="input-wrap">
+              <span class="input-ico">✉️</span>
+              <input type="email" id="adm-email" required placeholder="medico@healthcare.com">
+            </div>
+          </div>
+          <div class="campo">
+            <label>Rol interno</label>
+            <div class="input-wrap">
+              <span class="input-ico">🛠️</span>
+              <select id="adm-rol" required>
+                <option value="">Seleccionar rol...</option>
+                <option value="doctor">Médico / Especialista</option>
+                <option value="administracion">Administración Central</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-prim btn-full" style="padding:14px; font-size:15px">
+            ➕ Dar de alta usuario
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initDashboard } from '../js/dashboard-common.js'
+
+  // ── DATOS MOCK ──
+  let usuarios = [
+    { id: 'u1', nombre: 'Tomás', apellido: 'Gómez', dni: '54112233', email: 'paciente@healthcare.com', rol: 'paciente', activo: true },
+    { id: 'u2', nombre: 'Carlos', apellido: 'Bianchi', dni: '15334455', email: 'doctor@healthcare.com', rol: 'doctor', activo: true },
+    { id: 'u3', nombre: 'Super', apellido: 'Admin', dni: '99000111', email: 'admin@healthcare.com', rol: 'administracion', activo: true },
+    { id: 'u4', nombre: 'Milagros', apellido: 'Rossi', dni: '49334455', email: 'milagros@gmail.com', rol: 'paciente', activo: true }
+  ]
+  let turnosTotales = 2
+
+  // ── INICIALIZACIÓN ──
+  async function init() {
+    const perfil = await initDashboard('administracion')
+    if (!perfil) return
+
+    pintarUsuarios()
+    actualizarMetricas()
+
+    // Activar modo cards en mobile para tablas
+    if (window.innerWidth < 769) {
+      document.querySelectorAll('.table-container').forEach(c => c.classList.add('table-cards'))
+    }
+  }
+  init()
+
+  // ── PINTAR USUARIOS ──
+  function pintarUsuarios() {
+    const tbody = document.querySelector('#tabla-admin-usuarios tbody')
+    tbody.innerHTML = usuarios.map(u => {
+      const rolBadge = {
+        paciente: '<span class="badge badge-paciente">PACIENTE</span>',
+        doctor: '<span class="badge badge-doctor">DOCTOR</span>',
+        administracion: '<span class="badge badge-admin">ADMIN</span>'
+      }
+      return `<tr>
+        <td data-label="Nombre"><strong>${u.nombre} ${u.apellido}</strong></td>
+        <td data-label="DNI">${u.dni}</td>
+        <td data-label="Email">${u.email}</td>
+        <td data-label="Rol">${rolBadge[u.rol]}</td>
+        <td data-label="Estado"><span style="color:var(--ok)">● Activo</span></td>
+      </tr>`
+    }).join('')
+  }
+
+  function actualizarMetricas() {
+    document.getElementById('metric-usuarios').textContent = usuarios.length
+    document.getElementById('metric-pacientes').textContent = usuarios.filter(u => u.rol === 'paciente').length
+    document.getElementById('metric-doctores').textContent = usuarios.filter(u => u.rol === 'doctor').length
+    document.getElementById('metric-turnos').textContent = turnosTotales
+  }
+
+  // ── CREAR USUARIO ──
+  window.crearUsuarioAdmin = async function(e) {
+    e.preventDefault()
+    const nombre = document.getElementById('adm-nombre').value.trim()
+    const apellido = document.getElementById('adm-apellido').value.trim()
+    const dni = document.getElementById('adm-dni').value.trim()
+    const email = document.getElementById('adm-email').value.trim()
+    const rol = document.getElementById('adm-rol').value
+
+    if (!nombre || !apellido || !dni || !email || !rol) {
+      mostrarPush('err', 'Faltan datos', 'Completá todos los campos para dar de alta al usuario.')
+      return
+    }
+    if (!/^\d{7,8}$/.test(dni)) {
+      mostrarPush('err', 'DNI inválido', 'El DNI debe tener 7 u 8 dígitos.')
+      return
+    }
+    if (!email.includes('@')) {
+      mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
+      return
+    }
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      mostrarPush('err', 'Sesión expirada', 'Volvé a iniciar sesión.')
+      return
+    }
+
+    mostrarPush('ok', 'Creando usuario...', 'Esperá un momento.')
+
+    try {
+      const response = await fetch(
+        'https://zayvsijksoolbksaybjl.supabase.co/functions/v1/create-user',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ nombre, apellido, dni, email, rol })
+        }
+      )
+      const result = await response.json()
+      if (!response.ok || result.error) {
+        mostrarPush('err', 'Error', result.error || 'No se pudo crear el usuario.')
+        return
+      }
+      usuarios.push({ id: result.userId || 'u' + (usuarios.length + 1), nombre, apellido, dni, email, rol, activo: true })
+      e.target.reset()
+      pintarUsuarios()
+      actualizarMetricas()
+      mostrarPush('ok', '¡Usuario creado!', result.message)
+    } catch (err) {
+      mostrarPush('err', 'Error de conexión', 'No se pudo conectar con el servidor. Intentá de nuevo.')
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+/* ═══════════════════════════════════════════════
+   responsive.css · HealthCare Pediatría
+   Media queries DESKTOP (min-width: 769px)
+   Mobile-First: todo lo de arriba es mobile
+   ═══════════════════════════════════════════════ */
+
+@media (min-width: 769px) {
+
+  /* ── VARIABLES DESKTOP ── */
+  :root {
+    --sidebar-w: 260px;
+    --content-pad: 40px;
+    --max-content: 1200px;
+  }
+
+  /* ── NAVBAR DESKTOP ── */
+  .nav {
+    padding: 18px 48px;
+    height: auto;
+  }
+  .nav-logo { font-size: 22px; }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    text-decoration: none;
+    color: var(--texto-s);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: color .2s;
+    padding: var(--space-sm) 0;
+  }
+  .nav-links a:hover { color: var(--verde); }
+  .nav-cta {
+    display: inline-flex;
+    background: var(--verde);
+    color: var(--blanco);
+    padding: 10px 22px;
+    border-radius: var(--radio-full);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background .2s, transform .15s;
+  }
+  .nav-cta:hover {
+    background: var(--verde-mid);
+    transform: translateY(-1px);
+  }
+  .nav-toggle { display: none; }
+  .nav-menu-mobile { display: none !important; }
+
+  /* ── DASHBOARD LAYOUT DESKTOP ── */
+  .dashboard-layout {
+    grid-template-columns: var(--sidebar-w) 1fr;
+    padding-top: 0;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--verde);
+    color: var(--blanco);
+    padding: 32px 24px;
+    border-right: 1px solid rgba(0,0,0,.05);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar-brand {
+    font-family: var(--font-titulo);
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .sidebar-brand span { color: var(--acento); }
+  .sidebar-logo {
+    font-size: 13px;
+    opacity: .7;
+    margin-bottom: 40px;
+  }
+  .sidebar-menu {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sidebar-item {
+    padding: 12px 16px;
+    border-radius: var(--radio-md);
+    color: rgba(255,255,255,.75);
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all .2s;
+    font-size: 14px;
+    min-height: var(--touch-min);
+  }
+  .sidebar-item:hover,
+  .sidebar-item.active {
+    background: rgba(255,255,255,.15);
+    color: var(--blanco);
+  }
+  .main-content {
+    padding: 40px;
+    min-height: 100vh;
+  }
+
+  /* ── DASHBOARD HEADER DESKTOP ── */
+  .dash-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+  }
+  .dash-titulo { font-size: 32px; }
+  .dash-header-meta { text-align: right; }
+
+  /* ── METRICS DESKTOP ── */
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  /* ── PANEL DATA DESKTOP ── */
+  .panel-data {
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .panel-data h3 { font-size: 20px; margin-bottom: 20px; }
+
+  /* ── TABLAS DESKTOP ── */
+  .table-container {
+    margin: 0;
+    padding: 0;
+    overflow-x: visible;
+  }
+  .tabla-hc { min-width: auto; }
+  .tabla-hc th,
+  .tabla-hc td { white-space: nowrap; }
+
+  /* ── BOTÓN RETROCEDER DESKTOP ── */
+  .btn-retroceder {
+    bottom: 24px;
+    left: 24px;
+    transform: none;
+    padding: 18px 28px;
+    font-size: 16px;
+  }
+  .btn-retroceder:hover {
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  /* ── PUSH NOTIFICATION DESKTOP ── */
+  .push-box {
+    padding: 40px 48px;
+    max-width: 420px;
+  }
+  .push-icon { font-size: 56px; }
+  .push-titulo { font-size: 24px; }
+  .push-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  /* ── FORM GRID DESKTOP ── */
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  /* ── FOOTER DESKTOP ── */
+  .footer { padding: 28px 48px; }
+}
+
+/* ── TABLET (481px - 768px) ── */
+@media (min-width: 481px) and (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── LARGE DESKTOP (1200px+) ── */
+@media (min-width: 1200px) {
+  .main-content {
+    max-width: var(--max-content);
+    margin: 0 auto;
+  }
+}
