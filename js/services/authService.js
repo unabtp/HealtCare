@@ -4,7 +4,7 @@
 //  Dependency Inversion: depende de supabaseClient, no lo crea
 //  ═══════════════════════════════════════════════
 
-import { supabase } from '../supabaseClient.js'
+import { supabase } from '/js/supabaseClient.js'
 
 class AuthService {
   constructor() {

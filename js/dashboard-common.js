@@ -3,10 +3,10 @@
 //  Single Responsibility: inicialización, navegación, UI común
 //  ═══════════════════════════════════════════════
 
-import { supabase } from '../supabaseClient.js'
-import { authService } from '../services/authService.js'
-import { profileService } from '../services/profileService.js'
-import { redirectService } from '../services/redirectService.js'
+import { supabase } from '/js/supabaseClient.js'
+import { authService } from '/js/services/authService.js'
+import { profileService } from '/js/services/profileService.js'
+import { redirectService } from '/js/services/redirectService.js'
 
 // ── INICIALIZACIÓN GLOBAL ──
 export async function initDashboard(requiredRole) {

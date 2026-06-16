@@ -3,7 +3,7 @@
 //  Single Responsibility: solo CRUD de perfiles
 //  ═══════════════════════════════════════════════
 
-import { supabase } from '../supabaseClient.js'
+import { supabase } from '/js/supabaseClient.js'
 
 class ProfileService {
   // ── OBTENER PERFIL POR ID ──
