@@ -224,3 +224,25 @@
   grid-template-columns: 1fr;
   gap: var(--space-md);
 }
+
+/* ── DOCTORES GRID (Paciente) ── */
+.doctores-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* ── MODAL HISTORIAL (Doctor) ── */
+.modal-historial .push-box {
+  max-width: 600px;
+  text-align: left;
+}
+.modal-historial .push-titulo {
+  text-align: center;
+}
+.modal-historial .push-msg {
+  text-align: center;
+  font-weight: 600;
+}
+

@@ -421,3 +421,345 @@
   transition: opacity .2s;
 }
 .link-verde:hover { opacity: .75; }
+
+/* ── CALENDARIO EDITOR (Doctor) ── */
+.calendario-mes {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.cal-header {
+  text-align: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--texto-s);
+  font-weight: 600;
+  padding: 8px;
+}
+.cal-dia-editor {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--blanco);
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.cal-dia-editor:hover {
+  border-color: var(--verde);
+  transform: scale(1.05);
+}
+.cal-dia-editor.disponible {
+  background: var(--verde-claro);
+  border-color: var(--verde-mid);
+  color: var(--verde);
+}
+.cal-dia-editor.ocupado {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+}
+.cal-dia-editor.pasado {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.cal-dia-editor .cal-num {
+  font-size: 18px;
+  font-family: var(--font-titulo);
+}
+.cal-dia-editor .cal-estado {
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+/* ── HORARIOS EDITOR (Doctor) ── */
+.horarios-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.hora-editor {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 2px solid var(--borde);
+  background: var(--blanco);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+}
+.hora-editor:hover {
+  border-color: var(--verde);
+}
+.hora-editor.activo {
+  background: var(--verde);
+  color: var(--blanco);
+  border-color: var(--verde);
+}
+.hora-editor.eliminado {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  text-decoration: line-through;
+}
+
+/* ── ESTADOS DE ATENCIÓN ── */
+.estado-atencion {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.estado-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.estado-badge.pendiente {
+  background: var(--verde-claro);
+  color: var(--verde);
+}
+.estado-badge.atendiendo {
+  background: var(--warn-bg);
+  color: #854d0e;
+}
+.estado-badge.finalizado {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+
+/* ── DOC CARDS (Paciente) ── */
+.doc-card {
+  background: var(--blanco);
+  border: 2px solid var(--borde);
+  border-radius: var(--radio-lg);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+}
+.doc-card:hover {
+  border-color: var(--verde-mid);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(26,122,94,.1);
+}
+.doc-card.seleccionado {
+  border-color: var(--verde);
+  background: var(--verde-claro);
+}
+.doc-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 12px;
+}
+.doc-nombre {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--texto);
+  margin-bottom: 4px;
+}
+.doc-espec {
+  font-size: 12px;
+  color: var(--texto-s);
+}
+
+/* ── CALENDARIO PACIENTE ── */
+.calendario-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.cal-dia {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--blanco);
+  border: 1.5px solid var(--borde);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+}
+.cal-dia:hover {
+  border-color: var(--verde);
+}
+.cal-dia.disponible {
+  background: var(--verde-claro);
+  border-color: var(--verde-mid);
+  color: var(--verde);
+}
+.cal-dia.ocupado {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+.cal-dia.seleccionado {
+  background: var(--verde);
+  color: var(--blanco);
+  border-color: var(--verde);
+}
+.cal-dia-nombre {
+  font-size: 10px;
+  text-transform: uppercase;
+  opacity: .7;
+  margin-bottom: 2px;
+}
+.cal-dia-numero {
+  font-size: 18px;
+  font-family: var(--font-titulo);
+}
+
+/* ── HORARIOS PACIENTE ── */
+.horarios-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.hora-chip {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1.5px solid var(--borde);
+  background: var(--blanco);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+}
+.hora-chip:hover {
+  border-color: var(--verde);
+}
+.hora-chip.seleccionado {
+  background: var(--verde);
+  color: var(--blanco);
+  border-color: var(--verde);
+}
+.hora-chip.ocupado {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+/* ── PACIENTES LISTA ── */
+.pacientes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.pac-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--blanco);
+  border: 1.5px solid var(--borde);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.pac-item:hover {
+  border-color: var(--verde);
+}
+.pac-item.seleccionado {
+  border-color: var(--verde);
+  background: var(--verde-claro);
+}
+.pac-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.pac-info {
+  flex: 1;
+}
+.pac-nombre {
+  font-weight: 600;
+  font-size: 14px;
+}
+.pac-datos {
+  font-size: 12px;
+  color: var(--texto-s);
+}
+
+/* ── FICHA MÉDICA ── */
+.ficha-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+.ficha-item {
+  background: var(--crema);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 16px;
+}
+.ficha-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--texto-s);
+  margin-bottom: 4px;
+}
+.ficha-valor {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  padding: var(--content-pad);
+}
+.modal-overlay.activo {
+  display: flex;
+}
+.modal-box {
+  background: var(--blanco);
+  border-radius: var(--radio-xl);
+  padding: 32px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 24px 64px rgba(0,0,0,.15);
+}
+.modal-box h3 {
+  font-family: var(--font-titulo);
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+

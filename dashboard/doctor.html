@@ -11,44 +11,6 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/responsive.css">
-  <style>
-    /* ── ESTILOS ESPECÍFICOS DOCTOR ── */
-
-    .calendario-mes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px; }
-    .cal-header { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--texto-s); font-weight: 600; padding: 8px; }
-    .cal-dia-editor {
-      aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: var(--blanco); border: 2px solid var(--borde); border-radius: 12px;
-      font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; position: relative;
-    }
-    .cal-dia-editor:hover { border-color: var(--verde); transform: scale(1.05); }
-    .cal-dia-editor.disponible { background: var(--verde-claro); border-color: var(--verde-mid); color: var(--verde); }
-    .cal-dia-editor.ocupado { background: #f3f4f6; border-color: #e5e7eb; color: #9ca3af; }
-    .cal-dia-editor.pasado { opacity: .4; cursor: not-allowed; }
-    .cal-dia-editor .cal-num { font-size: 18px; font-family: var(--font-titulo); }
-    .cal-dia-editor .cal-estado { font-size: 10px; margin-top: 2px; }
-
-    .horarios-editor { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-    .hora-editor {
-      padding: 8px 18px; border-radius: 20px; border: 2px solid var(--borde);
-      background: var(--blanco); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s;
-    }
-    .hora-editor:hover { border-color: var(--verde); }
-    .hora-editor.activo { background: var(--verde); color: var(--blanco); border-color: var(--verde); }
-    .hora-editor.eliminado { background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb; text-decoration: line-through; }
-
-    .estado-atencion { display: flex; gap: 10px; align-items: center; }
-    .estado-badge {
-      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
-    }
-    .estado-badge.pendiente { background: var(--verde-claro); color: var(--verde); }
-    .estado-badge.atendiendo { background: var(--warn-bg); color: #854d0e; }
-    .estado-badge.finalizado { background: var(--ok-bg); color: var(--ok); }
-
-    .modal-historial .push-box { max-width: 600px; text-align: left; }
-    .modal-historial .push-titulo { text-align: center; }
-    .modal-historial .push-msg { text-align: center; font-weight: 600; }
-  </style>
 </head>
 <body>
 
@@ -125,6 +87,9 @@
       <div class="dash-header-info">
         <span class="badge badge-doctor">Cuerpo Médico</span>
         <h1 class="dash-titulo" id="saludo-usuario">Panel del Profesional</h1>
+      </div>
+      <div class="dash-header-meta">
+        <strong id="perfil-nombre">-</strong><br>DNI: <span id="perfil-dni">-</span>
       </div>
     </div>
 
@@ -232,6 +197,7 @@
     pintarHorariosEditor()
     actualizarMetricas()
 
+    // Activar modo cards en mobile para tablas
     if (window.innerWidth < 769) {
       document.querySelectorAll('.table-container').forEach(c => c.classList.add('table-cards'))
     }

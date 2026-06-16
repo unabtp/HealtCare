@@ -196,3 +196,14 @@
     margin: 0 auto;
   }
 }
+
+/* ── DOCTORES GRID DESKTOP ── */
+@media (min-width: 769px) {
+  .doctores-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  .ficha-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
