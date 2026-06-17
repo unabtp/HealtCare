@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/responsive.css">
-  
 </head>
 <body>
 
@@ -87,7 +86,7 @@
         <div class="table-container">
           <table class="tabla-hc" id="tabla-admin-usuarios">
             <thead>
-              <tr><th>Nombre</th><th>DNI</th><th>Email</th><th>Rol</th><th>Estado</th></tr>
+              <tr><th>Nombre</th><th>DNI</th><th>Email</th><th>Teléfono</th><th>Rol</th><th>Estado</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -99,8 +98,8 @@
     <div id="sub-usuarios" class="subseccion-dash">
       <div class="panel-data" style="max-width: 600px;">
         <h3>🥼 Alta de personal médico o administrativo</h3>
-        <p>Creá una nueva cuenta con rol de <strong>Médico</strong> o <strong>Administración</strong>. Se enviará un email de confirmación para que el usuario establezca su contraseña.</p>
-        <form onsubmit="crearUsuarioAdmin(event)">
+        <p>Creá una nueva cuenta con rol de <strong>Médico</strong> o <strong>Administración</strong>. La contraseña inicial será el <strong>DNI</strong> del usuario. Se enviará un email de confirmación.</p>
+        <form id="form-alta-usuario" onsubmit="crearUsuarioAdmin(event)">
           <div class="form-grid">
             <div class="campo">
               <label>Nombre</label>
@@ -121,7 +120,14 @@
             <label>DNI</label>
             <div class="input-wrap">
               <span class="input-ico">🪪</span>
-              <input type="text" id="adm-dni" required placeholder="18223344" maxlength="8">
+              <input type="text" id="adm-dni" required placeholder="18223344" maxlength="8" inputmode="numeric">
+            </div>
+          </div>
+          <div class="campo">
+            <label>Teléfono</label>
+            <div class="input-wrap">
+              <span class="input-ico">📞</span>
+              <input type="tel" id="adm-telefono" required placeholder="+54 11 4000-0000" autocomplete="tel">
             </div>
           </div>
           <div class="campo">
@@ -142,8 +148,10 @@
               </select>
             </div>
           </div>
-          <button type="submit" class="btn btn-prim btn-full" style="padding:14px; font-size:15px">
-            ➕ Dar de alta usuario
+          <div class="alerta" id="alerta-alta" style="margin-bottom: var(--space-lg)"></div>
+          <button type="submit" class="btn btn-prim btn-full" id="btn-alta" style="padding:14px; font-size:15px">
+            <span class="spinner" id="spin-alta"></span>
+            <span id="txt-alta">➕ Dar de alta usuario</span>
           </button>
         </form>
       </div>
@@ -153,22 +161,18 @@
 
 <script type="module">
   import { initDashboard } from '../js/dashboard-common.js'
+  import { supabase } from '../js/supabaseClient.js'
 
-  // ── DATOS MOCK ──
-  let usuarios = [
-    { id: 'u1', nombre: 'Tomás', apellido: 'Gómez', dni: '54112233', email: 'paciente@healthcare.com', rol: 'paciente', activo: true },
-    { id: 'u2', nombre: 'Carlos', apellido: 'Bianchi', dni: '15334455', email: 'doctor@healthcare.com', rol: 'doctor', activo: true },
-    { id: 'u3', nombre: 'Super', apellido: 'Admin', dni: '99000111', email: 'admin@healthcare.com', rol: 'administracion', activo: true },
-    { id: 'u4', nombre: 'Milagros', apellido: 'Rossi', dni: '49334455', email: 'milagros@gmail.com', rol: 'paciente', activo: true }
-  ]
-  let turnosTotales = 2
+  // ── DATOS MOCK (solo para demo visual, se reemplazan con datos reales de Supabase) ──
+  let usuarios = []
+  let turnosTotales = 0
 
   // ── INICIALIZACIÓN ──
   async function init() {
     const perfil = await initDashboard('administracion')
     if (!perfil) return
 
-    pintarUsuarios()
+    await cargarUsuariosReales()
     actualizarMetricas()
 
     // Activar modo cards en mobile para tablas
@@ -178,21 +182,48 @@
   }
   init()
 
+  // ── CARGAR USUARIOS REALES DESDE SUPABASE ──
+  async function cargarUsuariosReales() {
+    const { data, error } = await supabase
+      .from('perfiles')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error cargando usuarios:', error)
+      mostrarPush('err', 'Error', 'No se pudieron cargar los usuarios.')
+      return
+    }
+
+    usuarios = data || []
+    pintarUsuarios()
+  }
+
   // ── PINTAR USUARIOS ──
   function pintarUsuarios() {
     const tbody = document.querySelector('#tabla-admin-usuarios tbody')
+    if (!usuarios.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--texto-s)">No hay usuarios registrados.</td></tr>'
+      return
+    }
+
     tbody.innerHTML = usuarios.map(u => {
       const rolBadge = {
         paciente: '<span class="badge badge-paciente">PACIENTE</span>',
         doctor: '<span class="badge badge-doctor">DOCTOR</span>',
         administracion: '<span class="badge badge-admin">ADMIN</span>'
       }
+      const estado = u.activo !== false
+        ? '<span style="color:var(--ok)">● Activo</span>'
+        : '<span style="color:var(--error)">● Inactivo</span>'
+
       return `<tr>
-        <td data-label="Nombre"><strong>${u.nombre} ${u.apellido}</strong></td>
-        <td data-label="DNI">${u.dni}</td>
-        <td data-label="Email">${u.email}</td>
-        <td data-label="Rol">${rolBadge[u.rol]}</td>
-        <td data-label="Estado"><span style="color:var(--ok)">● Activo</span></td>
+        <td data-label="Nombre"><strong>${u.nombre || '-'} ${u.apellido || ''}</strong></td>
+        <td data-label="DNI">${u.dni || '-'}</td>
+        <td data-label="Email">${u.email || '-'}</td>
+        <td data-label="Teléfono">${u.telefono || '-'}</td>
+        <td data-label="Rol">${rolBadge[u.rol] || u.rol}</td>
+        <td data-label="Estado">${estado}</td>
       </tr>`
     }).join('')
   }
@@ -204,35 +235,60 @@
     document.getElementById('metric-turnos').textContent = turnosTotales
   }
 
+  // ── HELPERS UI ──
+  function mostrarAlertaAlta(tipo, msg) {
+    const el = document.getElementById('alerta-alta')
+    el.className = `alerta ${tipo} visible`
+    el.textContent = msg
+  }
+  function limpiarAlertaAlta() {
+    const el = document.getElementById('alerta-alta')
+    el.className = 'alerta'
+    el.textContent = ''
+  }
+  function setLoadingAlta(loading) {
+    document.getElementById('spin-alta').classList.toggle('visible', loading)
+    document.getElementById('txt-alta').style.display = loading ? 'none' : ''
+    document.getElementById('btn-alta').disabled = loading
+  }
+
   // ── CREAR USUARIO ──
   window.crearUsuarioAdmin = async function(e) {
     e.preventDefault()
+    limpiarAlertaAlta()
+
     const nombre = document.getElementById('adm-nombre').value.trim()
     const apellido = document.getElementById('adm-apellido').value.trim()
     const dni = document.getElementById('adm-dni').value.trim()
+    const telefono = document.getElementById('adm-telefono').value.trim()
     const email = document.getElementById('adm-email').value.trim()
     const rol = document.getElementById('adm-rol').value
 
-    if (!nombre || !apellido || !dni || !email || !rol) {
-      mostrarPush('err', 'Faltan datos', 'Completá todos los campos para dar de alta al usuario.')
+    if (!nombre || !apellido || !dni || !telefono || !email || !rol) {
+      mostrarAlertaAlta('err', '⚠ Completá todos los campos para dar de alta al usuario.')
       return
     }
     if (!/^\d{7,8}$/.test(dni)) {
-      mostrarPush('err', 'DNI inválido', 'El DNI debe tener 7 u 8 dígitos.')
+      mostrarAlertaAlta('err', '⚠ El DNI debe tener 7 u 8 dígitos.')
       return
     }
-    if (!email.includes('@')) {
-      mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
+    const telLimpio = telefono.replace(/[^\d]/g, '')
+    if (telLimpio.length < 7) {
+      mostrarAlertaAlta('err', '⚠ Ingresá un teléfono válido.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      mostrarAlertaAlta('err', '⚠ Ingresá un email válido.')
       return
     }
 
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
-      mostrarPush('err', 'Sesión expirada', 'Volvé a iniciar sesión.')
+      mostrarAlertaAlta('err', '⚠ Sesión expirada. Volvé a iniciar sesión.')
       return
     }
 
-    mostrarPush('ok', 'Creando usuario...', 'Esperá un momento.')
+    setLoadingAlta(true)
 
     try {
       const response = await fetch(
@@ -243,21 +299,43 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`
           },
-          body: JSON.stringify({ nombre, apellido, dni, email, rol })
+          body: JSON.stringify({
+            nombre,
+            apellido,
+            dni,
+            telefono: telLimpio,
+            email,
+            rol,
+            password: dni  // Contraseña default = DNI
+          })
         }
       )
+
       const result = await response.json()
+
       if (!response.ok || result.error) {
-        mostrarPush('err', 'Error', result.error || 'No se pudo crear el usuario.')
+        mostrarAlertaAlta('err', '❌ ' + (result.error || 'No se pudo crear el usuario.'))
+        setLoadingAlta(false)
         return
       }
-      usuarios.push({ id: result.userId || 'u' + (usuarios.length + 1), nombre, apellido, dni, email, rol, activo: true })
-      e.target.reset()
-      pintarUsuarios()
+
+      // Recargar lista de usuarios
+      await cargarUsuariosReales()
       actualizarMetricas()
-      mostrarPush('ok', '¡Usuario creado!', result.message)
+
+      e.target.reset()
+      setLoadingAlta(false)
+      mostrarAlertaAlta('ok', '✅ ¡Usuario creado! La contraseña inicial es el DNI.')
+
+      // Cambiar a la pestaña de usuarios para ver el resultado
+      setTimeout(() => {
+        cambiarSubseccion('global')
+      }, 1500)
+
     } catch (err) {
-      mostrarPush('err', 'Error de conexión', 'No se pudo conectar con el servidor. Intentá de nuevo.')
+      console.error('Error creando usuario:', err)
+      mostrarAlertaAlta('err', '❌ Error de conexión. Intentá de nuevo.')
+      setLoadingAlta(false)
     }
   }
 </script>

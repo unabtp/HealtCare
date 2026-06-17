@@ -59,6 +59,18 @@ class ProfileService {
     if (error) return 0
     return count || 0
   }
+
+  // ── BUSCAR POR TELÉFONO ──
+  async findByPhone(telefono) {
+    const telLimpio = telefono.replace(/[^\d]/g, '')
+    const { data, error } = await supabase
+      .from('perfiles')
+      .select('*')
+      .eq('telefono', telLimpio)
+      .single()
+    if (error) return null
+    return data
+  }
 }
 
 export const profileService = new ProfileService()

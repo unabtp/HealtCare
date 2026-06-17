@@ -235,16 +235,16 @@
       <!-- LOGIN -->
       <div class="form-panel active" id="panel-login">
         <h2 class="form-titulo">Bienvenido de nuevo</h2>
-        <p class="form-subtitulo">Ingresá con tu cuenta para gestionar tus turnos.</p>
+        <p class="form-subtitulo">Ingresá con tu email o teléfono para gestionar tus turnos.</p>
         <div class="alerta" id="alerta-login"></div>
         <form id="form-login" onsubmit="submitLogin(event)" novalidate>
           <div class="campo">
-            <label for="l-email">Correo electrónico</label>
+            <label for="l-email">Email o teléfono</label>
             <div class="input-wrap">
               <span class="input-ico">✉️</span>
-              <input type="email" id="l-email" placeholder="tu@email.com" autocomplete="email">
+              <input type="text" id="l-email" placeholder="tu@email.com o +54 11..." autocomplete="email">
             </div>
-            <p class="msg-error" id="err-l-email">⚠ Ingresá un email válido.</p>
+            <p class="msg-error" id="err-l-email">⚠ Ingresá un email válido o un teléfono numérico.</p>
           </div>
           <div class="campo">
             <label for="l-pass">Contraseña</label>
@@ -302,6 +302,14 @@
               <input type="text" id="r-dni" placeholder="12345678" maxlength="8" inputmode="numeric">
             </div>
             <p class="msg-error" id="err-r-dni">⚠ Ingresá un DNI válido (7 u 8 dígitos).</p>
+          </div>
+          <div class="campo">
+            <label for="r-telefono">Teléfono</label>
+            <div class="input-wrap">
+              <span class="input-ico">📞</span>
+              <input type="tel" id="r-telefono" placeholder="+54 11 4000-0000" autocomplete="tel">
+            </div>
+            <p class="msg-error" id="err-r-telefono">⚠ Ingresá un teléfono válido.</p>
           </div>
           <div class="campo">
             <label for="r-email">Correo electrónico</label>
@@ -440,16 +448,40 @@
     return e[msg] ?? msg
   }
 
-  /* ── LOGIN ── */
+  /* ── LOGIN CON EMAIL O TELÉFONO ── */
   window.submitLogin = async function(e) {
     e.preventDefault()
     limpiarAlertas()
-    const email = document.getElementById('l-email').value.trim()
+    const input = document.getElementById('l-email').value.trim()
     const pass  = document.getElementById('l-pass').value
     let ok = true
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    marcar('l-email', emailOk); mostrarError('err-l-email', !emailOk)
-    if (!emailOk) ok = false
+
+    // Detectar si es teléfono (solo números, +, espacios, guiones) o email
+    const esTelefono = /^[\d\+\s\-]+$/.test(input) && input.replace(/[^\d]/g, '').length >= 7
+    let email = input
+
+    if (esTelefono) {
+      // Buscar email por teléfono en la tabla perfiles
+      const telefonoLimpio = input.replace(/[^\d]/g, '')
+      const { data: perfilData, error: perfilError } = await supabase
+        .from('perfiles')
+        .select('email')
+        .eq('telefono', telefonoLimpio)
+        .single()
+
+      if (perfilError || !perfilData) {
+        mostrarAlerta('alerta-login', 'err', 'No encontramos una cuenta con ese teléfono.')
+        setLoading('login', false)
+        return
+      }
+      email = perfilData.email
+    } else {
+      // Validar email
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input)
+      marcar('l-email', emailOk); mostrarError('err-l-email', !emailOk)
+      if (!emailOk) ok = false
+    }
+
     const passOk = pass.length > 0
     marcar('l-pass', passOk); mostrarError('err-l-pass', !passOk)
     if (!passOk) ok = false
@@ -494,6 +526,7 @@
     const nombre   = document.getElementById('r-nombre').value.trim()
     const apellido = document.getElementById('r-apellido').value.trim()
     const dni      = document.getElementById('r-dni').value.trim()
+    const telefono = document.getElementById('r-telefono').value.trim()
     const email    = document.getElementById('r-email').value.trim()
     const pass     = document.getElementById('r-pass').value
     const pass2    = document.getElementById('r-pass2').value
@@ -511,6 +544,10 @@
     const dniOk = /^\d{7,8}$/.test(dni)
     marcar('r-dni', dniOk); mostrarError('err-r-dni', !dniOk)
     if (!dniOk) ok = false
+
+    const telOk = telefono.replace(/[^\d]/g, '').length >= 7
+    marcar('r-telefono', telOk); mostrarError('err-r-telefono', !telOk)
+    if (!telOk) ok = false
 
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     marcar('r-email', emailOk); mostrarError('err-r-email', !emailOk)
@@ -542,9 +579,10 @@
       return
     }
 
+    const telefonoLimpio = telefono.replace(/[^\d]/g, '')
     const { error: errPerfil } = await supabase
       .from('perfiles')
-      .insert({ id: data.user.id, nombre, apellido, dni, email, rol: 'paciente' })
+      .insert({ id: data.user.id, nombre, apellido, dni, email, telefono: telefonoLimpio, rol: 'paciente' })
 
     if (errPerfil) {
       mostrarAlerta('alerta-registro', 'err', 'Error al guardar el perfil. Intentá de nuevo.')

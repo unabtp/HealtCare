@@ -110,6 +110,11 @@
     min-height: 100vh;
   }
 
+  /* ── OCULTAR HEADER MOBILE EN DESKTOP ── */
+  .dash-mobile-header {
+    display: none !important;
+  }
+
   /* ── DASHBOARD HEADER DESKTOP ── */
   .dash-header {
     flex-direction: row;
@@ -168,7 +173,9 @@
 
   /* ── DOCTORES GRID DESKTOP ── */
   .doctores-grid {
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
   }
   .ficha-grid {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

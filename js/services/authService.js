@@ -11,8 +11,27 @@ class AuthService {
     this._session = null
   }
 
-  // ── LOGIN ──
-  async login(email, password) {
+  // ── LOGIN CON EMAIL O TELÉFONO ──
+  async login(emailOrPhone, password) {
+    let email = emailOrPhone
+
+    // Detectar si es teléfono (solo números, +, espacios, guiones)
+    const esTelefono = /^[\d\+\s\-]+$/.test(emailOrPhone) && emailOrPhone.replace(/[^\d]/g, '').length >= 7
+
+    if (esTelefono) {
+      const telefonoLimpio = emailOrPhone.replace(/[^\d]/g, '')
+      const { data: perfilData, error: perfilError } = await supabase
+        .from('perfiles')
+        .select('email')
+        .eq('telefono', telefonoLimpio)
+        .single()
+
+      if (perfilError || !perfilData) {
+        throw new Error('No encontramos una cuenta con ese teléfono.')
+      }
+      email = perfilData.email
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -70,9 +89,6 @@ class AuthService {
 
   // ── REACTIVAR CUENTA (desde email de inactividad) ──
   async reactivateAccount(token) {
-    // Validar el token contra Supabase
-    // En producción, el token sería un JWT firmado o un hash de recuperación
-    // Aquí usamos el flujo de recuperación de contraseña de Supabase como validación
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash: token,
       type: 'recovery'
@@ -82,7 +98,6 @@ class AuthService {
       throw new Error('El link de reactivación expiró o no es válido. Solicitá uno nuevo.')
     }
 
-    // Reactivar en la tabla perfiles
     const { error: updateError } = await supabase
       .from('perfiles')
       .update({ activo: true, last_sign_in_at: new Date().toISOString() })

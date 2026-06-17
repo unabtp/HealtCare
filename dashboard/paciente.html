@@ -11,6 +11,124 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    /* Modal de especialidades */
+    .modal-especialidades {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--content-pad);
+      backdrop-filter: blur(6px);
+    }
+    .modal-especialidades.activo { display: flex; }
+    .modal-especialidades .modal-box {
+      background: var(--blanco);
+      border-radius: var(--radio-xl);
+      padding: 28px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,.15);
+    }
+    .modal-especialidades h3 {
+      font-family: var(--font-titulo);
+      font-size: 22px;
+      margin-bottom: 8px;
+      color: var(--texto);
+    }
+    .modal-especialidades .modal-sub {
+      font-size: 14px;
+      color: var(--texto-s);
+      margin-bottom: 20px;
+    }
+    .especialidad-info {
+      background: var(--crema);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-lg);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .especialidad-info h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--verde);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .especialidad-info p {
+      font-size: 13px;
+      color: var(--texto-s);
+      line-height: 1.6;
+      margin: 0;
+    }
+    .btn-info-especialidad {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 16px;
+      background: var(--verde-claro);
+      border: 2px dashed var(--verde-mid);
+      border-radius: var(--radio-lg);
+      color: var(--verde);
+      font-family: var(--font-cuerpo);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      margin: var(--space-xl) 0;
+      min-height: var(--touch-min);
+    }
+    .btn-info-especialidad:hover {
+      background: var(--verde);
+      color: var(--blanco);
+      border-style: solid;
+    }
+    .btn-info-especialidad .icono {
+      font-size: 20px;
+    }
+    /* Mejoras mobile para pacientes lista */
+    @media (max-width: 480px) {
+      .pac-item {
+        padding: 14px;
+      }
+      .pac-avatar {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+      }
+      .pac-nombre {
+        font-size: 15px;
+      }
+      .doc-card {
+        padding: 16px;
+      }
+      .doc-avatar {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+      }
+      .cal-dia {
+        border-radius: 10px;
+        font-size: 13px;
+      }
+      .cal-dia-numero {
+        font-size: 16px;
+      }
+      .hora-chip {
+        padding: 10px 16px;
+        font-size: 13px;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -58,7 +176,7 @@
         <label>DNI</label>
         <div class="input-wrap">
           <span class="input-ico">🪪</span>
-          <input type="text" id="np-dni" required placeholder="12345678" maxlength="8">
+          <input type="text" id="np-dni" required placeholder="12345678" maxlength="8" inputmode="numeric">
         </div>
       </div>
       <div style="display:flex; gap:10px">
@@ -66,6 +184,48 @@
         <button type="submit" class="btn btn-prim" style="flex:1">Guardar paciente</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL ESPECIALIDADES -->
+<div class="modal-especialidades" id="modal-especialidades">
+  <div class="modal-box">
+    <h3>🩺 ¿Qué especialidad necesitás?</h3>
+    <p class="modal-sub">Te explicamos para qué sirve cada especialidad pediátrica:</p>
+
+    <div class="especialidad-info">
+      <h4>👨‍⚕️ Pediatría General</h4>
+      <p>Atención integral del niño sano y enfermo. Controles de crecimiento, desarrollo, vacunación y consultas por cualquier síntoma. Es tu primer punto de contacto.</p>
+    </div>
+
+    <div class="especialidad-info">
+      <h4>👶 Neonatología</h4>
+      <p>Especialistas en recién nacidos y bebés prematuros. Control del desarrollo en los primeros meses de vida, lactancia y cuidados especiales.</p>
+    </div>
+
+    <div class="especialidad-info">
+      <h4>❤️ Cardiología Pediátrica</h4>
+      <p>Estudia el corazón y los vasos sanguíneos de los niños. Ideal si tu pediatra detectó un soplo cardíaco, dolor en el pecho o mareos frecuentes.</p>
+    </div>
+
+    <div class="especialidad-info">
+      <h4>🫁 Neumonología Infantil</h4>
+      <p>Especialistas en pulmones y vías respiratorias. Asma, bronquiolitis, neumonías, tos crónica o problemas para respirar.</p>
+    </div>
+
+    <div class="especialidad-info">
+      <h4>🦠 Infectología Pediátrica</h4>
+      <p>Enfermedades causadas por virus, bacterias u hongos. Fiebres persistentes, infecciones recurrentes o enfermedades exóticas.</p>
+    </div>
+
+    <div class="especialidad-info">
+      <h4>🔬 Radiología Pediátrica</h4>
+      <p>Estudios por imágenes adaptados para niños: radiografías, ecografías, tomografías. Especialistas en interpretar resultados con enfoque pediátrico.</p>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top: 20px">
+      <button type="button" class="btn btn-prim btn-full" onclick="cerrarModalEspecialidades()">Entendido, gracias</button>
+    </div>
   </div>
 </div>
 
@@ -140,6 +300,12 @@
 
         <button class="btn btn-prim btn-full" id="btn-confirmar-turno" onclick="confirmarTurno()" disabled>
           Confirmar turno
+        </button>
+
+        <!-- BOTÓN INFO ESPECIALIDADES -->
+        <button class="btn-info-especialidad" onclick="abrirModalEspecialidades()">
+          <span class="icono">💡</span>
+          <span>¿No sabés qué especialidad elegir? Hacé click acá para más información</span>
         </button>
       </div>
 
@@ -238,13 +404,18 @@
 
 <script type="module">
   import { initDashboard } from '../js/dashboard-common.js'
+  import { supabase } from '../js/supabaseClient.js'
 
-  // ── DATOS MOCK ──
+  // ═══════════════════════════════════════════════
+  //  DATOS - INICIAN VACÍOS, SE CARGAN DESDE SUPABASE
+  //  ═══════════════════════════════════════════════
   let usuarioLogueado = null
-  let pacientesRegistrados = [
-    { id: 'p1', nombre: 'Tomás Gómez', nacimiento: '2020-03-15', dni: '54112233', tipoSangre: 'O+', altura: '105cm', alergias: 'Ninguna', edad: '6 años' },
-    { id: 'p2', nombre: 'Martina López', nacimiento: '2018-07-22', dni: '49334455', tipoSangre: 'A+', altura: '120cm', alergias: 'Penicilina', edad: '8 años' }
-  ]
+  let pacientesRegistrados = []
+  let turnosExistentes = []
+  let historialClinico = []
+
+  // Lista de doctores/especialistas (estática hasta tener tabla en Supabase)
+  // Basada en las capturas del usuario + 2 nuevos especialistas
   let doctores = [
     { id: 'd1', nombre: 'Dr. Carlos Bianchi', especialidad: 'Pediatría General', sexo: 'M', avatar: '👨‍⚕️',
       dias: [1,2,3,4,5], horarios: ['09:00','09:30','10:00','10:30','11:00','15:00','15:30','16:00'] },
@@ -255,16 +426,11 @@
     { id: 'd4', nombre: 'Dra. Luciana Fernández', especialidad: 'Neumonología Infantil', sexo: 'F', avatar: '👩‍⚕️',
       dias: [1,2,4,5], horarios: ['09:00','09:30','10:00','11:00','15:30','16:00','16:30'] },
     { id: 'd5', nombre: 'Dr. Nahuel Salazar', especialidad: 'Infectología Pediátrica', sexo: 'M', avatar: '👨‍⚕️',
-      dias: [3,5], horarios: ['08:00','08:30','09:00','09:30','14:00','14:30','15:00'] }
-  ]
-  let turnosExistentes = [
-    { id: 't1', pacienteId: 'p1', pacienteNombre: 'Tomás Gómez', doctorId: 'd1', doctorNombre: 'Dr. Carlos Bianchi', fecha: '2026-06-10', hora: '09:30', estado: 'Confirmado' },
-    { id: 't2', pacienteId: 'p2', pacienteNombre: 'Martina López', doctorId: 'd2', doctorNombre: 'Dra. Sofía Martínez', fecha: '2026-06-12', hora: '11:00', estado: 'Confirmado' }
-  ]
-  let historialClinico = [
-    { id: 'h1', pacienteId: 'p1', fecha: '2026-03-12', profesional: 'Dr. Carlos Bianchi', diagnostico: 'Control de niño sano - 6 años. Desarrollo correcto.', tratamiento: 'Esquema vacunas al día. Próximo control en 6 meses.', tipo: 'control' },
-    { id: 'h2', pacienteId: 'p2', fecha: '2026-01-20', profesional: 'Dra. Sofía Martínez', diagnostico: 'Cuadro bronquial obstructivo leve.', tratamiento: 'Salbutamol aerosol cada 8hs por 5 días.', tipo: 'consulta' },
-    { id: 'h3', pacienteId: 'p1', fecha: '2025-09-15', profesional: 'Dr. Carlos Bianchi', diagnostico: 'Control anual. Peso y talla dentro de percentiles normales.', tratamiento: 'Continuar alimentación balanceada. Control en 6 meses.', tipo: 'control' }
+      dias: [3,5], horarios: ['08:00','08:30','09:00','09:30','14:00','14:30','15:00'] },
+    { id: 'd6', nombre: 'Dra. Allice Downelly', especialidad: 'Pediatría General', sexo: 'F', avatar: '👩‍⚕️',
+      dias: [1,2,3,4,5], horarios: ['09:00','09:30','10:00','10:30','11:00','15:00','15:30','16:00','16:30'] },
+    { id: 'd7', nombre: 'Dra. Lesly Goldberg', especialidad: 'Radiología Pediátrica', sexo: 'F', avatar: '👩‍⚕️',
+      dias: [1,2,3,4], horarios: ['08:00','08:30','09:00','09:30','10:00','14:00','14:30','15:00','15:30'] }
   ]
 
   let doctorSeleccionado = null
@@ -273,11 +439,18 @@
   let pacienteSeleccionado = null
   let pacienteHistorialSeleccionado = null
 
-  // ── INICIALIZACIÓN ──
+  // ═══════════════════════════════════════════════
+  //  INICIALIZACIÓN
+  //  ═══════════════════════════════════════════════
   async function init() {
     const perfil = await initDashboard('paciente')
     if (!perfil) return
     usuarioLogueado = perfil
+
+    // Cargar datos reales desde Supabase
+    await cargarPacientes()
+    await cargarTurnos()
+    await cargarHistorial()
 
     pintarDoctores()
     pintarPacientes()
@@ -292,24 +465,110 @@
   }
   init()
 
-  // ── MODAL ──
+  // ═══════════════════════════════════════════════
+  //  CARGA DE DATOS DESDE SUPABASE
+  //  ═══════════════════════════════════════════════
+  async function cargarPacientes() {
+    if (!usuarioLogueado) return
+    try {
+      const { data, error } = await supabase
+        .from('pacientes')
+        .select('*')
+        .eq('tutor_id', usuarioLogueado.id)
+      if (!error && data) pacientesRegistrados = data
+    } catch (e) {
+      console.log('Tabla pacientes no disponible, usando datos locales')
+    }
+  }
+
+  async function cargarTurnos() {
+    if (!usuarioLogueado) return
+    try {
+      const { data, error } = await supabase
+        .from('turnos')
+        .select('*')
+        .eq('tutor_id', usuarioLogueado.id)
+        .order('fecha', { ascending: true })
+      if (!error && data) turnosExistentes = data
+    } catch (e) {
+      console.log('Tabla turnos no disponible, usando datos locales')
+    }
+  }
+
+  async function cargarHistorial() {
+    if (!usuarioLogueado) return
+    try {
+      const { data, error } = await supabase
+        .from('historial_clinico')
+        .select('*')
+        .eq('tutor_id', usuarioLogueado.id)
+        .order('fecha', { ascending: false })
+      if (!error && data) historialClinico = data
+    } catch (e) {
+      console.log('Tabla historial no disponible, usando datos locales')
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  MODALES
+  //  ═══════════════════════════════════════════════
   window.abrirModalPaciente = function() {
     document.getElementById('modal-nuevo-paciente').classList.add('activo')
   }
   window.cerrarModal = function() {
     document.getElementById('modal-nuevo-paciente').classList.remove('activo')
   }
-  window.guardarNuevoPaciente = function(e) {
+  window.abrirModalEspecialidades = function() {
+    document.getElementById('modal-especialidades').classList.add('activo')
+    document.body.style.overflow = 'hidden'
+  }
+  window.cerrarModalEspecialidades = function() {
+    document.getElementById('modal-especialidades').classList.remove('activo')
+    document.body.style.overflow = ''
+  }
+
+  // Cerrar modal al hacer click fuera
+  document.getElementById('modal-especialidades').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalEspecialidades()
+  })
+
+  window.guardarNuevoPaciente = async function(e) {
     e.preventDefault()
     const nombre = document.getElementById('np-nombre').value.trim()
     const nacimiento = document.getElementById('np-nacimiento').value
     const dni = document.getElementById('np-dni').value.trim()
 
-    pacientesRegistrados.push({
-      id: 'p' + (pacientesRegistrados.length + 1),
-      nombre, nacimiento, dni,
-      tipoSangre: 'No especificado', altura: 'No especificado', alergias: 'Ninguna', edad: calcularEdad(nacimiento)
-    })
+    if (!usuarioLogueado) {
+      mostrarPush('err', 'Error', 'Debes iniciar sesión para agregar pacientes.')
+      return
+    }
+
+    const nuevoPaciente = {
+      id: 'p' + Date.now(),
+      tutor_id: usuarioLogueado.id,
+      nombre,
+      nacimiento,
+      dni,
+      tipo_sangre: 'No especificado',
+      altura: 'No especificado',
+      alergias: 'Ninguna',
+      edad: calcularEdad(nacimiento)
+    }
+
+    // Intentar guardar en Supabase
+    try {
+      const { data, error } = await supabase
+        .from('pacientes')
+        .insert(nuevoPaciente)
+        .select()
+      if (!error && data) {
+        pacientesRegistrados.push(data[0])
+      } else {
+        pacientesRegistrados.push(nuevoPaciente)
+      }
+    } catch (e) {
+      pacientesRegistrados.push(nuevoPaciente)
+    }
 
     cerrarModal()
     e.target.reset()
@@ -327,9 +586,15 @@
     return edad + ' años'
   }
 
-  // ── DOCTORES ──
+  // ═══════════════════════════════════════════════
+  //  DOCTORES
+  //  ═══════════════════════════════════════════════
   function pintarDoctores() {
     const grid = document.getElementById('doctores-grid')
+    if (!doctores.length) {
+      grid.innerHTML = '<p style="color:var(--texto-s);font-size:14px;text-align:center;padding:20px">No hay especialistas disponibles en este momento.</p>'
+      return
+    }
     grid.innerHTML = doctores.map(d => `
       <div class="doc-card" id="doc-${d.id}" onclick="seleccionarDoctor('${d.id}')">
         <div class="doc-avatar">${d.avatar}</div>
@@ -350,7 +615,9 @@
     document.getElementById('btn-confirmar-turno').disabled = true
   }
 
-  // ── CALENDARIO ──
+  // ═══════════════════════════════════════════════
+  //  CALENDARIO
+  //  ═══════════════════════════════════════════════
   function pintarCalendario() {
     const grid = document.getElementById('calendario-grid')
     const hoy = new Date()
@@ -365,8 +632,8 @@
       const mes = fecha.getMonth() + 1
       const fechaStr = `${fecha.getFullYear()}-${String(mes).padStart(2,'0')}-${String(diaNum).padStart(2,'0')}`
 
-      const disponible = doctorSeleccionado.dias.includes(diaSem)
-      const ocupado = turnosExistentes.filter(t => t.doctorId === doctorSeleccionado.id && t.fecha === fechaStr).length >= 3
+      const disponible = doctorSeleccionado && doctorSeleccionado.dias.includes(diaSem)
+      const ocupado = turnosExistentes.filter(t => t.doctor_id === doctorSeleccionado.id && t.fecha === fechaStr).length >= 3
       let clase = 'cal-dia'
       if (!disponible) clase += ' ocupado'
       else if (ocupado) clase += ' ocupado'
@@ -388,10 +655,13 @@
     document.getElementById('horarios-container').style.display = 'block'
   }
 
-  // ── HORARIOS ──
+  // ═══════════════════════════════════════════════
+  //  HORARIOS
+  //  ═══════════════════════════════════════════════
   function pintarHorarios() {
     const grid = document.getElementById('horarios-grid')
-    const ocupados = turnosExistentes.filter(t => t.doctorId === doctorSeleccionado.id && t.fecha === diaSeleccionado).map(t => t.hora)
+    if (!doctorSeleccionado) return
+    const ocupados = turnosExistentes.filter(t => t.doctor_id === doctorSeleccionado.id && t.fecha === diaSeleccionado).map(t => t.hora)
 
     grid.innerHTML = doctorSeleccionado.horarios.map(h => {
       const ocupado = ocupados.includes(h)
@@ -408,15 +678,21 @@
     document.getElementById('btn-confirmar-turno').disabled = false
   }
 
-  // ── PACIENTES ──
+  // ═══════════════════════════════════════════════
+  //  PACIENTES
+  //  ═══════════════════════════════════════════════
   function pintarPacientes() {
     const lista = document.getElementById('lista-pacientes')
+    if (!pacientesRegistrados.length) {
+      lista.innerHTML = '<p style="color:var(--texto-s);font-size:14px;padding:12px 0">No tenés pacientes registrados. Agregá uno nuevo.</p>'
+      return
+    }
     lista.innerHTML = pacientesRegistrados.map(p => `
       <div class="pac-item" id="pac-${p.id}" onclick="seleccionarPaciente('${p.id}')">
         <div class="pac-avatar">👶</div>
         <div class="pac-info">
           <div class="pac-nombre">${p.nombre}</div>
-          <div class="pac-datos">DNI: ${p.dni} · ${p.edad}</div>
+          <div class="pac-datos">DNI: ${p.dni} · ${p.edad || calcularEdad(p.nacimiento)}</div>
         </div>
       </div>
     `).join('')
@@ -429,12 +705,16 @@
 
   function pintarPacientesHistorial() {
     const lista = document.getElementById('lista-pacientes-historial')
+    if (!pacientesRegistrados.length) {
+      lista.innerHTML = '<p style="color:var(--texto-s);font-size:14px;padding:12px 0">No hay pacientes registrados.</p>'
+      return
+    }
     lista.innerHTML = pacientesRegistrados.map(p => `
       <div class="pac-item" id="pac-h-${p.id}" onclick="seleccionarPacienteHistorial('${p.id}')">
         <div class="pac-avatar">👶</div>
         <div class="pac-info">
           <div class="pac-nombre">${p.nombre}</div>
-          <div class="pac-datos">DNI: ${p.dni} · ${p.edad}</div>
+          <div class="pac-datos">DNI: ${p.dni} · ${p.edad || calcularEdad(p.nacimiento)}</div>
         </div>
       </div>
     `).join('')
@@ -450,19 +730,21 @@
 
   function pintarFichaMedica() {
     const p = pacienteHistorialSeleccionado
+    if (!p) return
     document.getElementById('ficha-medica-grid').innerHTML = `
       <div class="ficha-item"><div class="ficha-label">Nombre y apellido</div><div class="ficha-valor">${p.nombre}</div></div>
       <div class="ficha-item"><div class="ficha-label">DNI</div><div class="ficha-valor">${p.dni}</div></div>
-      <div class="ficha-item"><div class="ficha-label">Edad</div><div class="ficha-valor">${p.edad}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Edad</div><div class="ficha-valor">${p.edad || calcularEdad(p.nacimiento)}</div></div>
       <div class="ficha-item"><div class="ficha-label">Fecha de nacimiento</div><div class="ficha-valor">${p.nacimiento}</div></div>
-      <div class="ficha-item"><div class="ficha-label">Tipo de sangre</div><div class="ficha-valor">${p.tipoSangre}</div></div>
-      <div class="ficha-item"><div class="ficha-label">Altura</div><div class="ficha-valor">${p.altura}</div></div>
-      <div class="ficha-item"><div class="ficha-label">Alergias</div><div class="ficha-valor">${p.alergias}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Tipo de sangre</div><div class="ficha-valor">${p.tipo_sangre || 'No especificado'}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Altura</div><div class="ficha-valor">${p.altura || 'No especificado'}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Alergias</div><div class="ficha-valor">${p.alergias || 'Ninguna'}</div></div>
     `
   }
 
   function pintarHistorialClinico() {
-    const historial = historialClinico.filter(h => h.pacienteId === pacienteHistorialSeleccionado.id)
+    if (!pacienteHistorialSeleccionado) return
+    const historial = historialClinico.filter(h => h.paciente_id === pacienteHistorialSeleccionado.id)
     const tbody = document.getElementById('tabla-historial-clinico')
 
     if (!historial.length) {
@@ -481,10 +763,13 @@
     `).join('')
   }
 
-  // ── CONSTANCIA PDF ──
+  // ═══════════════════════════════════════════════
+  //  CONSTANCIA PDF
+  //  ═══════════════════════════════════════════════
   window.descargarConstancia = function(historialId) {
     const h = historialClinico.find(x => x.id === historialId)
-    const p = pacientesRegistrados.find(x => x.id === h.pacienteId)
+    const p = pacientesRegistrados.find(x => x.id === h.paciente_id)
+    if (!h || !p) return
 
     const contenido = `HEALTHCARE PEDIATRÍA
 Av. Corrientes 1234, Buenos Aires
@@ -498,7 +783,7 @@ Tel: +54 11 4000-0000
 
 Paciente: ${p.nombre}
 DNI: ${p.dni}
-Edad: ${p.edad}
+Edad: ${p.edad || calcularEdad(p.nacimiento)}
 
 Fecha de consulta: ${h.fecha}
 Profesional: ${h.profesional}
@@ -531,23 +816,41 @@ HealthCare Pediatría - 2026`
     mostrarPush('ok', 'Constancia descargada', `La constancia médica de ${p.nombre} fue descargada correctamente.`)
   }
 
-  // ── CONFIRMAR TURNO ──
-  window.confirmarTurno = function() {
+  // ═══════════════════════════════════════════════
+  //  CONFIRMAR TURNO
+  //  ═══════════════════════════════════════════════
+  window.confirmarTurno = async function() {
     if (!pacienteSeleccionado || !doctorSeleccionado || !diaSeleccionado || !horaSeleccionada) {
       mostrarPush('err', 'Faltan datos', 'Seleccioná el paciente, doctor, día y horario.')
       return
     }
 
-    turnosExistentes.push({
-      id: 't' + (turnosExistentes.length + 1),
-      pacienteId: pacienteSeleccionado.id,
-      pacienteNombre: pacienteSeleccionado.nombre,
-      doctorId: doctorSeleccionado.id,
-      doctorNombre: doctorSeleccionado.nombre,
+    const nuevoTurno = {
+      id: 't' + Date.now(),
+      tutor_id: usuarioLogueado.id,
+      paciente_id: pacienteSeleccionado.id,
+      paciente_nombre: pacienteSeleccionado.nombre,
+      doctor_id: doctorSeleccionado.id,
+      doctor_nombre: doctorSeleccionado.nombre,
       fecha: diaSeleccionado,
       hora: horaSeleccionada,
       estado: 'Confirmado'
-    })
+    }
+
+    // Intentar guardar en Supabase
+    try {
+      const { data, error } = await supabase
+        .from('turnos')
+        .insert(nuevoTurno)
+        .select()
+      if (!error && data) {
+        turnosExistentes.push(data[0])
+      } else {
+        turnosExistentes.push(nuevoTurno)
+      }
+    } catch (e) {
+      turnosExistentes.push(nuevoTurno)
+    }
 
     pintarTurnos()
     actualizarMetricas()
@@ -561,13 +864,12 @@ HealthCare Pediatría - 2026`
     document.getElementById('btn-confirmar-turno').disabled = true
   }
 
-  // ── TURNOS ──
+  // ═══════════════════════════════════════════════
+  //  TURNOS
+  //  ═══════════════════════════════════════════════
   function pintarTurnos() {
     const tbody = document.getElementById('tabla-paciente-turnos')
-    const filtrados = turnosExistentes.filter(t => {
-      const pacienteIds = pacientesRegistrados.map(p => p.id)
-      return pacienteIds.includes(t.pacienteId)
-    })
+    const filtrados = turnosExistentes
 
     if (!filtrados.length) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--texto-s)">No tenés turnos programados.</td></tr>'
@@ -576,8 +878,8 @@ HealthCare Pediatría - 2026`
 
     tbody.innerHTML = filtrados.map(t => `
       <tr>
-        <td data-label="Paciente"><strong>${t.pacienteNombre}</strong></td>
-        <td data-label="Especialista">${t.doctorNombre}</td>
+        <td data-label="Paciente"><strong>${t.paciente_nombre}</strong></td>
+        <td data-label="Especialista">${t.doctor_nombre}</td>
         <td data-label="Fecha">${t.fecha}</td>
         <td data-label="Hora">${t.hora} hs</td>
         <td data-label="Estado"><span style="color:var(--ok)">● ${t.estado}</span></td>
@@ -589,7 +891,12 @@ HealthCare Pediatría - 2026`
     mostrarPush('warn', '¿Cancelar turno?', '¿Estás seguro de que querés cancelar este turno?',
       `<button class="btn btn-sec" onclick="cerrarPush()">No, volver</button><button class="btn btn-peligro" onclick="confirmarCancelar('${id}')">Sí, cancelar</button>`)
   }
-  window.confirmarCancelar = function(id) {
+  window.confirmarCancelar = async function(id) {
+    try {
+      await supabase.from('turnos').delete().eq('id', id)
+    } catch (e) {
+      console.log('No se pudo eliminar de Supabase, eliminando localmente')
+    }
     turnosExistentes = turnosExistentes.filter(t => t.id !== id)
     pintarTurnos()
     actualizarMetricas()
@@ -598,36 +905,56 @@ HealthCare Pediatría - 2026`
   }
 
   function actualizarMetricas() {
-    const pacienteIds = pacientesRegistrados.map(p => p.id)
-    document.getElementById('metric-turnos').textContent = turnosExistentes.filter(t => pacienteIds.includes(t.pacienteId)).length
-    document.getElementById('metric-consultas').textContent = historialClinico.filter(h => pacienteIds.includes(h.pacienteId)).length
+    document.getElementById('metric-turnos').textContent = turnosExistentes.length
+    document.getElementById('metric-consultas').textContent = historialClinico.length
   }
 
-  // ── PERFIL ──
-  window.cambiarPassword = function() {
+  // ═══════════════════════════════════════════════
+  //  PERFIL
+  //  ═══════════════════════════════════════════════
+  window.cambiarPassword = async function() {
     const actual = document.getElementById('p-pass-actual').value
     const nueva = document.getElementById('p-pass-nueva').value
     if (!actual || !nueva || nueva.length < 8) {
       mostrarPush('err', 'Error', 'La nueva contraseña debe tener al menos 8 caracteres.')
       return
     }
+    const { error } = await supabase.auth.updateUser({ password: nueva })
+    if (error) {
+      mostrarPush('err', 'Error', 'No se pudo actualizar la contraseña.')
+      return
+    }
     mostrarPush('ok', 'Contraseña actualizada', 'Tu contraseña fue cambiada correctamente.')
     document.getElementById('p-pass-actual').value = ''
     document.getElementById('p-pass-nueva').value = ''
   }
-  window.cambiarEmail = function() {
+  window.cambiarEmail = async function() {
     const email = document.getElementById('p-email-nuevo').value
     if (!email.includes('@')) {
       mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
       return
     }
-    mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}.`)
+    const { error } = await supabase.auth.updateUser({ email })
+    if (error) {
+      mostrarPush('err', 'Error', 'No se pudo actualizar el email.')
+      return
+    }
+    mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}. Revisá tu bandeja de entrada para confirmar.`)
     document.getElementById('p-email-nuevo').value = ''
   }
-  window.cambiarTelefono = function() {
+  window.cambiarTelefono = async function() {
     const tel = document.getElementById('p-telefono').value
     if (!tel) {
       mostrarPush('err', 'Teléfono vacío', 'Ingresá un número de teléfono.')
+      return
+    }
+    const telLimpio = tel.replace(/[^\d]/g, '')
+    const { error } = await supabase
+      .from('perfiles')
+      .update({ telefono: telLimpio })
+      .eq('id', usuarioLogueado.id)
+    if (error) {
+      mostrarPush('err', 'Error', 'No se pudo actualizar el teléfono.')
       return
     }
     mostrarPush('ok', 'Teléfono actualizado', `Tu teléfono fue cambiado a ${tel}.`)
