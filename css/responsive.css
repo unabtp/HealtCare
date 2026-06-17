@@ -145,18 +145,6 @@
   .tabla-hc th,
   .tabla-hc td { white-space: nowrap; }
 
-  /* ── BOTÓN RETROCEDER DESKTOP ── */
-  .btn-retroceder {
-    bottom: 24px;
-    left: 24px;
-    transform: none;
-    padding: 18px 28px;
-    font-size: 16px;
-  }
-  .btn-retroceder:hover {
-    transform: translateY(-2px) scale(1.05);
-  }
-
   /* ── PUSH NOTIFICATION DESKTOP ── */
   .push-box {
     padding: 40px 48px;
@@ -177,6 +165,14 @@
 
   /* ── FOOTER DESKTOP ── */
   .footer { padding: 28px 48px; }
+
+  /* ── DOCTORES GRID DESKTOP ── */
+  .doctores-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  .ficha-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
 }
 
 /* ── TABLET (481px - 768px) ── */
@@ -196,14 +192,3 @@
     margin: 0 auto;
   }
 }
-
-/* ── DOCTORES GRID DESKTOP ── */
-@media (min-width: 769px) {
-  .doctores-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-  .ficha-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-}
-
