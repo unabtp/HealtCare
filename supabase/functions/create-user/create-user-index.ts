@@ -9,6 +9,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 
 function getServiceRoleKey(): string {
+  // 1. Intentar leer de Custom Secret (sin prefijo SUPABASE_ prohibido)
+  const customKey = Deno.env.get('SERVICE_ROLE_KEY')
+  if (customKey) return customKey
+
+  // 2. Intentar leer de SUPABASE_SECRET_KEYS (JSON)
   const secretKeysJson = Deno.env.get('SUPABASE_SECRET_KEYS')
   if (secretKeysJson) {
     try {
@@ -18,6 +23,8 @@ function getServiceRoleKey(): string {
       return ''
     }
   }
+
+  // 3. Fallback a deprecated SUPABASE_SERVICE_ROLE_KEY
   return Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 }
 
