@@ -1,152 +1,142 @@
 // ═══════════════════════════════════════════════
-//  dashboard-common.js · Lógica compartida dashboards
-//  Single Responsibility: inicialización, navegación, UI común
-//  ═══════════════════════════════════════════════
+// dashboard-common.js · Lógica compartida de dashboards
+// ═══════════════════════════════════════════════
 
 import { supabase } from '/js/supabaseClient.js'
 import { authService } from '/js/services/authService.js'
 import { profileService } from '/js/services/profileService.js'
-import { redirectService } from '/js/services/redirectService.js'
 
-// ── INICIALIZACIÓN GLOBAL ──
-export async function initDashboard(requiredRole) {
+// ── INICIALIZACIÓN COMÚN ──
+export async function initDashboardCommon() {
   // 1. Verificar sesión
   const session = await authService.getSession()
   if (!session) {
-    redirectService.redirectToLogin()
+    window.location.href = '/login.html'
     return null
   }
 
-  // 2. Verificar inactividad
-  const inactivity = await authService.checkInactivity(365)
-  if (!inactivity.active) {
-    await authService.logout()
-    redirectService.redirectToLogin()
+  // 2. Obtener perfil
+  let perfil = null
+  try {
+    perfil = await profileService.getById(session.user.id)
+  } catch (e) {
+    console.error('Error cargando perfil:', e)
+  }
+
+  if (!perfil) {
+    window.location.href = '/login.html'
     return null
   }
 
-  // 3. Obtener perfil y verificar rol
-  const perfil = await profileService.getById(session.user.id)
-  if (!perfil || perfil.rol !== requiredRole) {
-    redirectService.redirectToLogin()
-    return null
+  // 3. Mostrar saludo con nombre y DNI
+  const saludoEl = document.getElementById('dash-saludo')
+  const dniEl = document.getElementById('dash-dni')
+  if (saludoEl) {
+    saludoEl.textContent = `Hola, ${perfil.nombre || ''} ${perfil.apellido || ''}`.trim()
+  }
+  if (dniEl) {
+    dniEl.textContent = `DNI: ${perfil.dni || '-'}`
   }
 
-  // 4. Actualizar last_sign_in_at
-  await profileService.update(session.user.id, {
-    last_sign_in_at: new Date().toISOString()
-  })
+  // 4. Cerrar sesión - quitar emoji puerta
+  const logoutBtn = document.getElementById('btn-logout')
+  if (logoutBtn) {
+    logoutBtn.innerHTML = 'Cerrar sesión'
+    logoutBtn.addEventListener('click', async () => {
+      await authService.logout()
+      window.location.href = '/login.html'
+    })
+  }
 
-  // 5. Setup UI
-  setupMobileMenu()
-  setupPushNotifications()
-  updateHeader(perfil)
+  // 5. Mobile menu - fix para Android (click + touch)
+  initMobileMenuFix()
 
   return perfil
 }
 
-// ── HEADER ──
-function updateHeader(perfil) {
-  const saludo = document.getElementById('saludo-usuario')
-  const nombre = document.getElementById('perfil-nombre')
-  const dni = document.getElementById('perfil-dni')
-
-  if (saludo) {
-    const hora = new Date().getHours()
-    const texto = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches'
-    saludo.textContent = `${texto}, ${perfil.nombre}`
-  }
-  if (nombre) nombre.textContent = `${perfil.nombre} ${perfil.apellido}`
-  if (dni) dni.textContent = perfil.dni
-}
-
-// ── MOBILE MENU ──
-function setupMobileMenu() {
+// ── FIX MOBILE MENU PARA ANDROID ──
+function initMobileMenuFix() {
   const toggle = document.getElementById('menu-toggle')
   const overlay = document.getElementById('sidebar-overlay')
   const menu = document.getElementById('sidebar-mobile')
 
   if (!toggle || !overlay || !menu) return
 
-  toggle.addEventListener('click', () => {
+  // Remover listeners anteriores si existen
+  const newToggle = toggle.cloneNode(true)
+  toggle.parentNode.replaceChild(newToggle, toggle)
+
+  function openMenu() {
     overlay.classList.add('activo')
     menu.classList.add('activo')
     document.body.style.overflow = 'hidden'
+    newToggle.setAttribute('aria-expanded', 'true')
+  }
+
+  function closeMenu() {
+    overlay.classList.remove('activo')
+    menu.classList.remove('activo')
+    document.body.style.overflow = ''
+    newToggle.setAttribute('aria-expanded', 'false')
+  }
+
+  // Click para desktop + touchstart para Android
+  newToggle.addEventListener('click', (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (menu.classList.contains('activo')) {
+      closeMenu()
+    } else {
+      openMenu()
+    }
   })
 
-  overlay.addEventListener('click', cerrarSidebar)
+  newToggle.addEventListener('touchstart', (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (menu.classList.contains('activo')) {
+      closeMenu()
+    } else {
+      openMenu()
+    }
+  }, { passive: false })
+
+  overlay.addEventListener('click', closeMenu)
+  overlay.addEventListener('touchstart', closeMenu, { passive: true })
+
+  // Cerrar al tocar links del menú
   menu.querySelectorAll('a, [onclick*="cerrarSidebar"]').forEach(el => {
-    el.addEventListener('click', cerrarSidebar)
+    el.addEventListener('click', closeMenu)
+    el.addEventListener('touchstart', closeMenu, { passive: true })
   })
 
   // Swipe para cerrar
   let startX = 0
-  menu.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX })
+  menu.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX
+  }, { passive: true })
   menu.addEventListener('touchend', (e) => {
     const endX = e.changedTouches[0].clientX
-    if (startX - endX > 80) cerrarSidebar()
-  })
+    if (startX - endX > 80) closeMenu()
+  }, { passive: true })
 }
 
-window.cerrarSidebar = function() {
-  const overlay = document.getElementById('sidebar-overlay')
-  const menu = document.getElementById('sidebar-mobile')
-  if (overlay) overlay.classList.remove('activo')
-  if (menu) menu.classList.remove('activo')
-  document.body.style.overflow = ''
+// ── UTILIDADES ──
+export function mostrarAlerta(id, mensaje, tipo = 'ok') {
+  const el = document.getElementById(id)
+  if (!el) return
+  el.textContent = mensaje
+  el.className = `alerta ${tipo} visible`
+  setTimeout(() => el.classList.remove('visible'), 4000)
 }
 
-// ── PUSH NOTIFICATIONS ──
-function setupPushNotifications() {
-  // Crear elementos si no existen
-  if (!document.getElementById('push-overlay')) {
-    const html = `
-      <div class="push-overlay" id="push-overlay">
-        <div class="push-box" id="push-box">
-          <div class="push-icon" id="push-icon">✅</div>
-          <div class="push-titulo" id="push-titulo">¡Listo!</div>
-          <div class="push-msg" id="push-msg">Operación realizada correctamente.</div>
-          <div class="push-actions" id="push-botones">
-            <button class="btn btn-prim" onclick="window.pushNotification.close()">Aceptar</button>
-          </div>
-        </div>
-      </div>
-    `
-    const div = document.createElement('div')
-    div.innerHTML = html
-    document.body.appendChild(div.firstElementChild)
-  }
+export function formatearFecha(fecha) {
+  if (!fecha) return '-'
+  const d = new Date(fecha)
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-window.mostrarPush = function(tipo, titulo, msg, botones = '') {
-  const overlay = document.getElementById('push-overlay')
-  const box = document.getElementById('push-box')
-  if (!overlay || !box) return
-
-  document.getElementById('push-icon').textContent = tipo === 'ok' ? '✅' : tipo === 'err' ? '❌' : '⚠️'
-  document.getElementById('push-titulo').textContent = titulo
-  document.getElementById('push-msg').textContent = msg
-  document.getElementById('push-botones').innerHTML = botones || '<button class="btn btn-prim" onclick="window.pushNotification.close()">Aceptar</button>'
-  box.className = 'push-box ' + tipo
-  overlay.classList.add('activo')
-}
-
-window.cerrarPush = function() {
-  const overlay = document.getElementById('push-overlay')
-  if (overlay) overlay.classList.remove('activo')
-}
-
-// ── NAVEGACIÓN ──
-window.cambiarSubseccion = function(id) {
-  document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'))
-  if (event && event.currentTarget) event.currentTarget.classList.add('active')
-  document.querySelectorAll('.subseccion-dash').forEach(s => s.classList.remove('activa'))
-  const target = document.getElementById('sub-' + id)
-  if (target) target.classList.add('activa')
-}
-
-// ── CERRAR SESIÓN ──
-window.cerrarSesion = async function() {
-  await authService.logout()
-  redirectService.redirectToLogin()
+export function formatearHora(hora) {
+  if (!hora) return '-'
+  return hora
 }

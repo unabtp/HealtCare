@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-//  authService.js · Servicio de autenticación
-//  Single Responsibility: solo maneja login/logout/sesión
-//  Dependency Inversion: depende de supabaseClient, no lo crea
-//  ═══════════════════════════════════════════════
+// authService.js · Servicio de autenticación
+// Single Responsibility: solo maneja login/logout/sesión
+// Dependency Inversion: depende de supabaseClient, no lo crea
+// ═══════════════════════════════════════════════
 
 import { supabase } from '/js/supabaseClient.js'
 
@@ -15,15 +15,15 @@ class AuthService {
   async login(emailOrPhone, password) {
     let email = emailOrPhone
 
-    // Detectar si es teléfono (solo números, +, espacios, guiones)
-    const esTelefono = /^[\d\+\s\-]+$/.test(emailOrPhone) && emailOrPhone.replace(/[^\d]/g, '').length >= 7
+    // Detectar si es teléfono (solo números, espacios, guiones)
+    const soloNums = emailOrPhone.replace(/\D/g, '')
+    const esTelefono = /^\d{7,15}$/.test(soloNums) && soloNums.length >= 7
 
     if (esTelefono) {
-      const telefonoLimpio = emailOrPhone.replace(/[^\d]/g, '')
       const { data: perfilData, error: perfilError } = await supabase
         .from('perfiles')
         .select('email')
-        .eq('telefono', telefonoLimpio)
+        .eq('telefono', soloNums)
         .single()
 
       if (perfilError || !perfilData) {
@@ -41,14 +41,33 @@ class AuthService {
     return data
   }
 
-  // ── REGISTRO ──
+  // ── REGISTRO CON VALIDACIÓN DE EMAIL EXISTENTE ──
   async register(email, password, metadata = {}) {
+    // Primero verificar si el email ya existe en auth.users
+    const { data: existingUsers, error: checkError } = await supabase
+      .from('perfiles')
+      .select('email')
+      .eq('email', email)
+      .limit(1)
+
+    if (existingUsers && existingUsers.length > 0) {
+      throw new Error('Ya existe una cuenta con ese email. Usá "Iniciar sesión" o "¿Olvidaste tu contraseña?".')
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: metadata }
     })
-    if (error) throw new Error(this._translateError(error.message))
+
+    if (error) {
+      // Si Supabase dice que ya existe
+      if (error.message.includes('already registered') || error.message.includes('User already registered')) {
+        throw new Error('Ya existe una cuenta con ese email. Usá "Iniciar sesión" o "¿Olvidaste tu contraseña?".')
+      }
+      throw new Error(this._translateError(error.message))
+    }
+
     return data
   }
 
