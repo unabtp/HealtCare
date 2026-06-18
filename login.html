@@ -583,7 +583,7 @@
     const telefonoLimpio = telefono.replace(/[^\d]/g, '')
     const { error: errPerfil } = await supabase
       .from('perfiles')
-      .insert({ id: data.user.id, nombre, apellido, dni, email, telefono: telefonoLimpio, rol: 'paciente' })
+      .insert({ id: data.user.id, nombre, apellido, dni, email, telefono: telefonoLimpio, rol: 'paciente', estado: null })
 
     if (errPerfil) {
       mostrarAlerta('alerta-registro', 'err', 'Error al guardar el perfil. Intentá de nuevo.')
