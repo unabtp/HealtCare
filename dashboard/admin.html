@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
   <title>Panel Admin · HealthCare Pediatría</title>
+  <link rel="icon" type="image/png" href="../Logo-Healtcare.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -11,6 +12,101 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    /* Modal de edición de usuario */
+    .modal-usuario {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--content-pad);
+      backdrop-filter: blur(6px);
+    }
+    .modal-usuario.activo { display: flex; }
+    .modal-usuario .modal-box {
+      background: var(--blanco);
+      border-radius: var(--radio-xl);
+      padding: 28px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,.15);
+    }
+    .modal-usuario h3 {
+      font-family: var(--font-titulo);
+      font-size: 22px;
+      margin-bottom: 20px;
+      color: var(--texto);
+    }
+    /* Lápiz de edición */
+    .btn-editar {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      transition: background .2s;
+      color: var(--verde);
+    }
+    .btn-editar:hover {
+      background: var(--verde-claro);
+    }
+    .btn-editar svg {
+      width: 18px;
+      height: 18px;
+    }
+    /* Filtros de búsqueda */
+    .filtros-usuarios {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filtros-usuarios input {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 14px;
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-md);
+      font-size: 14px;
+      font-family: var(--font-cuerpo);
+    }
+    .filtros-usuarios select {
+      padding: 10px 14px;
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-md);
+      font-size: 14px;
+      font-family: var(--font-cuerpo);
+      background: var(--blanco);
+      cursor: pointer;
+    }
+    /* Estado dinámico doctor */
+    .estado-libre { color: var(--ok); font-weight: 600; }
+    .estado-ocupado { color: var(--acento); font-weight: 600; }
+    .estado-ausente { color: var(--texto-s); font-weight: 600; }
+    .estado-select {
+      padding: 4px 8px;
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-md);
+      font-size: 13px;
+      font-family: var(--font-cuerpo);
+      background: var(--blanco);
+      cursor: pointer;
+      color: var(--texto);
+    }
+    /* Tabla gestión usuarios */
+    .tabla-gestion th, .tabla-gestion td {
+      font-size: 13px;
+    }
+    .tabla-gestion td {
+      padding: 10px 8px;
+    }
+  </style>
 </head>
 <body>
 
@@ -25,13 +121,14 @@
 <div class="sidebar-mobile" id="sidebar-mobile">
   <div>
     <div class="sidebar-brand">Health<span>Care</span></div>
-    <div class="sidebar-logo">🏥 Pediatría</div>
+    <div class="sidebar-logo">Pediatría</div>
     <ul class="sidebar-menu">
-      <li class="sidebar-item active" onclick="cambiarSubseccion('global'); cerrarSidebar()">📊 Panel de Control</li>
-      <li class="sidebar-item" onclick="cambiarSubseccion('usuarios'); cerrarSidebar()">🥼 Gestionar Profesionales</li>
+      <li class="sidebar-item active" onclick="cambiarSubseccion('global'); cerrarSidebar()">Panel de Control</li>
+      <li class="sidebar-item" onclick="cambiarSubseccion('usuarios'); cerrarSidebar()">Gestionar Profesionales</li>
+      <li class="sidebar-item" onclick="cambiarSubseccion('gestion'); cerrarSidebar()">Gestión de Usuarios</li>
     </ul>
   </div>
-  <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+  <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">Cerrar Sesión</button>
 </div>
 
 <div class="dashboard-layout">
@@ -39,13 +136,14 @@
   <div class="sidebar">
     <div>
       <div class="sidebar-brand">Health<span>Care</span></div>
-      <div class="sidebar-logo">🏥 Pediatría</div>
+      <div class="sidebar-logo">Pediatría</div>
       <ul class="sidebar-menu">
-        <li class="sidebar-item active" onclick="cambiarSubseccion('global')">📊 Panel de Control</li>
-        <li class="sidebar-item" onclick="cambiarSubseccion('usuarios')">🥼 Gestionar Profesionales</li>
+        <li class="sidebar-item active" onclick="cambiarSubseccion('global')">Panel de Control</li>
+        <li class="sidebar-item" onclick="cambiarSubseccion('usuarios')">Gestionar Profesionales</li>
+        <li class="sidebar-item" onclick="cambiarSubseccion('gestion')">Gestión de Usuarios</li>
       </ul>
     </div>
-    <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+    <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">Cerrar Sesión</button>
   </div>
 
   <!-- MAIN -->
@@ -56,7 +154,7 @@
         <h1 class="dash-titulo" id="saludo-usuario">Consola de Administración</h1>
       </div>
       <div class="dash-header-meta">
-        <strong id="perfil-nombre">-</strong><br>DNI: <span id="perfil-dni">-</span>
+        <strong id="perfil-nombre">-</strong>
       </div>
     </div>
 
@@ -64,29 +162,21 @@
     <div id="sub-global" class="subseccion-dash activa">
       <div class="metrics-grid">
         <div class="card card-metric">
-          <div class="metric-label">Usuarios Registrados</div>
-          <div class="metric-val" id="metric-usuarios">0</div>
-        </div>
-        <div class="card card-metric">
-          <div class="metric-label">Pacientes</div>
-          <div class="metric-val" id="metric-pacientes">0</div>
-        </div>
-        <div class="card card-metric">
           <div class="metric-label">Doctores</div>
           <div class="metric-val" id="metric-doctores">0</div>
         </div>
         <div class="card card-metric">
-          <div class="metric-label">Turnos Totales</div>
+          <div class="metric-label">Turnos del día</div>
           <div class="metric-val" id="metric-turnos">0</div>
         </div>
       </div>
 
       <div class="panel-data">
-        <h3>👥 Auditoría de cuentas existentes</h3>
+        <h3>Auditoría de doctores</h3>
         <div class="table-container">
-          <table class="tabla-hc" id="tabla-admin-usuarios">
+          <table class="tabla-hc" id="tabla-auditoria-doctores">
             <thead>
-              <tr><th>Nombre</th><th>DNI</th><th>Email</th><th>Teléfono</th><th>Rol</th><th>Estado</th></tr>
+              <tr><th>Nombre</th><th>DNI</th><th>Email</th><th>Teléfono</th><th>Rol/Especialidad</th><th>Estado</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -94,10 +184,10 @@
       </div>
     </div>
 
-    <!-- SUB: GESTIONAR USUARIOS -->
+    <!-- SUB: GESTIONAR PROFESIONALES -->
     <div id="sub-usuarios" class="subseccion-dash">
       <div class="panel-data" style="max-width: 600px;">
-        <h3>🥼 Alta de personal médico o administrativo</h3>
+        <h3>Alta de personal médico o administrativo</h3>
         <p>Creá una nueva cuenta con rol de <strong>Médico</strong> o <strong>Administración</strong>. La contraseña inicial será el <strong>DNI</strong> del usuario. Se enviará un email de confirmación.</p>
         <form id="form-alta-usuario" onsubmit="crearUsuarioAdmin(event)">
           <div class="form-grid">
@@ -151,11 +241,83 @@
           <div class="alerta" id="alerta-alta" style="margin-bottom: var(--space-lg)"></div>
           <button type="submit" class="btn btn-prim btn-full" id="btn-alta" style="padding:14px; font-size:15px">
             <span class="spinner" id="spin-alta"></span>
-            <span id="txt-alta">➕ Dar de alta usuario</span>
+            <span id="txt-alta">Dar de alta usuario</span>
           </button>
         </form>
       </div>
     </div>
+
+    <!-- SUB: GESTIÓN DE USUARIOS -->
+    <div id="sub-gestion" class="subseccion-dash">
+      <div class="panel-data">
+        <h3>Gestión de Usuarios</h3>
+        <div class="filtros-usuarios">
+          <input type="text" id="filtro-dni" placeholder="Buscar por DNI..." oninput="filtrarUsuarios()">
+          <select id="filtro-estado" onchange="filtrarUsuarios()">
+            <option value="todos">Todos</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div class="table-container">
+          <table class="tabla-hc tabla-gestion" id="tabla-gestion-usuarios">
+            <thead>
+              <tr><th>Nombre</th><th>Apellido</th><th>DNI</th><th>Email</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR USUARIO -->
+<div class="modal-usuario" id="modal-editar-usuario">
+  <div class="modal-box">
+    <h3>Editar usuario</h3>
+    <form id="form-editar-usuario" onsubmit="guardarEdicionUsuario(event)">
+      <input type="hidden" id="edit-id">
+      <div class="campo" style="margin-bottom:14px">
+        <label>Nombre</label>
+        <div class="input-wrap">
+          <span class="input-ico">👤</span>
+          <input type="text" id="edit-nombre" required>
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:14px">
+        <label>Apellido</label>
+        <div class="input-wrap">
+          <span class="input-ico">👤</span>
+          <input type="text" id="edit-apellido" required>
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:14px">
+        <label>DNI</label>
+        <div class="input-wrap">
+          <span class="input-ico">🪪</span>
+          <input type="text" id="edit-dni" required maxlength="8" inputmode="numeric">
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:14px">
+        <label>Email</label>
+        <div class="input-wrap">
+          <span class="input-ico">✉️</span>
+          <input type="email" id="edit-email" required>
+        </div>
+      </div>
+      <div class="campo" style="margin-bottom:20px">
+        <label>Teléfono</label>
+        <div class="input-wrap">
+          <span class="input-ico">📞</span>
+          <input type="tel" id="edit-telefono">
+        </div>
+      </div>
+      <div style="display:flex; gap:10px">
+        <button type="button" class="btn btn-sec" onclick="cerrarModalEditar()" style="flex:1">Cancelar</button>
+        <button type="submit" class="btn btn-prim" style="flex:1">Guardar cambios</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -163,9 +325,10 @@
   import { initDashboard } from '../js/dashboard-common.js'
   import { supabase } from '../js/supabaseClient.js'
 
-  // ── DATOS MOCK (solo para demo visual, se reemplazan con datos reales de Supabase) ──
+  // ── DATOS ──
   let usuarios = []
-  let turnosTotales = 0
+  let turnosDelDia = 0
+  let usuarioEditando = null
 
   // ── INICIALIZACIÓN ──
   async function init() {
@@ -173,16 +336,18 @@
     if (!perfil) return
 
     await cargarUsuariosReales()
+    await cargarTurnosDelDia()
     actualizarMetricas()
+    pintarAuditoriaDoctores()
+    pintarGestionUsuarios()
 
-    // Activar modo cards en mobile para tablas
     if (window.innerWidth < 769) {
       document.querySelectorAll('.table-container').forEach(c => c.classList.add('table-cards'))
     }
   }
   init()
 
-  // ── CARGAR USUARIOS REALES DESDE SUPABASE ──
+  // ── CARGAR USUARIOS REALES ──
   async function cargarUsuariosReales() {
     const { data, error } = await supabase
       .from('perfiles')
@@ -196,43 +361,252 @@
     }
 
     usuarios = data || []
-    pintarUsuarios()
   }
 
-  // ── PINTAR USUARIOS ──
-  function pintarUsuarios() {
-    const tbody = document.querySelector('#tabla-admin-usuarios tbody')
-    if (!usuarios.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--texto-s)">No hay usuarios registrados.</td></tr>'
+  // ── CARGAR TURNOS DEL DÍA ──
+  async function cargarTurnosDelDia() {
+    const hoy = new Date().toISOString().split('T')[0]
+    const { data, error } = await supabase
+      .from('turnos')
+      .select('*')
+      .eq('fecha', hoy)
+      .in('estado', ['pendiente', 'confirmado'])
+
+    if (error) {
+      console.error('Error cargando turnos del día:', error)
+      return
+    }
+    turnosDelDia = data ? data.length : 0
+  }
+
+    // ── CALCULAR ESTADO DEL DOCTOR ──
+  async function calcularEstadoDoctor(doctorId) {
+    // Primero, verificar si el doctor tiene estado manual en perfiles
+    const doctor = usuarios.find(u => u.id === doctorId)
+    if (doctor && doctor.estado === 'ausente') {
+      return 'ausente'
+    }
+
+    const ahora = new Date()
+    const hoyStr = ahora.toISOString().split('T')[0]
+    const horaActual = ahora.getHours().toString().padStart(2, '0') + ':' + ahora.getMinutes().toString().padStart(2, '0')
+
+    // Buscar si el doctor tiene turno en este momento
+    const { data, error } = await supabase
+      .from('turnos')
+      .select('*')
+      .eq('doctor_id', doctorId)
+      .eq('fecha', hoyStr)
+      .in('estado', ['pendiente', 'confirmado'])
+
+    if (error || !data || data.length === 0) {
+      return doctor?.estado || 'libre'
+    }
+
+    // Verificar si algún turno está en el horario actual (±30 min)
+    const turnoActual = data.find(t => {
+      const [h, m] = t.hora.split(':').map(Number)
+      const [ha, ma] = horaActual.split(':').map(Number)
+      const diffMin = Math.abs((h * 60 + m) - (ha * 60 + ma))
+      return diffMin <= 30
+    })
+
+    if (turnoActual) return 'ocupado'
+    return doctor?.estado || 'libre'
+  }
+
+  // ── PINTAR AUDITORÍA DE DOCTORES ──
+  async function pintarAuditoriaDoctores() {
+    const tbody = document.querySelector('#tabla-auditoria-doctores tbody')
+    const doctores = usuarios.filter(u => u.rol === 'doctor')
+
+    if (!doctores.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--texto-s)">No hay doctores registrados.</td></tr>'
       return
     }
 
-    tbody.innerHTML = usuarios.map(u => {
-      const rolBadge = {
-        paciente: '<span class="badge badge-paciente">PACIENTE</span>',
-        doctor: '<span class="badge badge-doctor">DOCTOR</span>',
-        administracion: '<span class="badge badge-admin">ADMIN</span>'
-      }
-      const estado = u.activo !== false
-        ? '<span style="color:var(--ok)">● Activo</span>'
-        : '<span style="color:var(--error)">● Inactivo</span>'
+    const filas = await Promise.all(doctores.map(async u => {
+      const estado = await calcularEstadoDoctor(u.id)
+      const estadoClass = {
+        libre: 'estado-libre',
+        ocupado: 'estado-ocupado',
+        ausente: 'estado-ausente'
+      }[estado]
+      const estadoTexto = {
+        libre: 'Libre',
+        ocupado: 'Ocupado',
+        ausente: 'Ausente'
+      }[estado]
 
       return `<tr>
         <td data-label="Nombre"><strong>${u.nombre || '-'} ${u.apellido || ''}</strong></td>
         <td data-label="DNI">${u.dni || '-'}</td>
         <td data-label="Email">${u.email || '-'}</td>
         <td data-label="Teléfono">${u.telefono || '-'}</td>
-        <td data-label="Rol">${rolBadge[u.rol] || u.rol}</td>
-        <td data-label="Estado">${estado}</td>
+        <td data-label="Rol">${u.rol || '-'}</td>
+        <td data-label="Estado">
+          <select class="estado-select" onchange="cambiarEstadoDoctor('${u.id}', this.value)">
+            <option value="libre" ${estado === 'libre' ? 'selected' : ''}>● Libre</option>
+            <option value="ocupado" ${estado === 'ocupado' ? 'selected' : ''}>● Ocupado</option>
+            <option value="ausente" ${estado === 'ausente' ? 'selected' : ''}>● Ausente</option>
+          </select>
+        </td>
+      </tr>`
+    }))
+
+    tbody.innerHTML = filas.join('')
+  }
+
+  // ── CAMBIAR ESTADO DEL DOCTOR ──
+  window.cambiarEstadoDoctor = async function(id, nuevoEstado) {
+    const { error } = await supabase
+      .from('perfiles')
+      .update({ estado: nuevoEstado })
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error actualizando estado:', error)
+      mostrarPush('err', 'Error', 'No se pudo actualizar el estado del doctor.')
+      return
+    }
+
+    // Actualizar local
+    const idx = usuarios.findIndex(u => u.id === id)
+    if (idx !== -1) {
+      usuarios[idx].estado = nuevoEstado
+    }
+
+    mostrarPush('ok', 'Estado actualizado', 'El estado del doctor fue cambiado correctamente.')
+    pintarAuditoriaDoctores()
+  }
+
+
+  // ── PINTAR GESTIÓN DE USUARIOS ──
+  function pintarGestionUsuarios(filtrados = null) {
+    const tbody = document.querySelector('#tabla-gestion-usuarios tbody')
+    let lista = filtrados || usuarios.filter(u => u.rol === 'paciente')
+
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--texto-s)">No hay usuarios pacientes registrados.</td></tr>'
+      return
+    }
+
+    tbody.innerHTML = lista.map(u => {
+      const estado = u.activo !== false ? 'activo' : 'inactivo'
+      const estadoTexto = estado === 'activo' ? 'Activo' : 'Inactivo'
+      const estadoColor = estado === 'activo' ? 'var(--ok)' : 'var(--error)'
+
+      return `<tr>
+        <td data-label="Nombre">${u.nombre || '-'}</td>
+        <td data-label="Apellido">${u.apellido || '-'}</td>
+        <td data-label="DNI">${u.dni || '-'}</td>
+        <td data-label="Email">${u.email || '-'}</td>
+        <td data-label="Teléfono">${u.telefono || '-'}</td>
+        <td data-label="Estado"><span style="color:${estadoColor}">● ${estadoTexto}</span></td>
+        <td data-label="Acciones">
+          <button class="btn-editar" onclick="abrirModalEditar('${u.id}')" title="Editar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+        </td>
       </tr>`
     }).join('')
   }
 
+  // ── FILTRAR USUARIOS ──
+  window.filtrarUsuarios = function() {
+    const dniFiltro = document.getElementById('filtro-dni').value.trim().toLowerCase()
+    const estadoFiltro = document.getElementById('filtro-estado').value
+
+    let filtrados = usuarios.filter(u => u.rol === 'paciente')
+
+    if (dniFiltro) {
+      filtrados = filtrados.filter(u => (u.dni || '').toLowerCase().includes(dniFiltro))
+    }
+
+    if (estadoFiltro !== 'todos') {
+      const activo = estadoFiltro === 'activo'
+      filtrados = filtrados.filter(u => (u.activo !== false) === activo)
+    }
+
+    pintarGestionUsuarios(filtrados)
+  }
+
+  // ── MODAL EDITAR ──
+  window.abrirModalEditar = function(id) {
+    const u = usuarios.find(x => x.id === id)
+    if (!u) return
+    usuarioEditando = u
+    document.getElementById('edit-id').value = u.id
+    document.getElementById('edit-nombre').value = u.nombre || ''
+    document.getElementById('edit-apellido').value = u.apellido || ''
+    document.getElementById('edit-dni').value = u.dni || ''
+    document.getElementById('edit-email').value = u.email || ''
+    document.getElementById('edit-telefono').value = u.telefono || ''
+    document.getElementById('modal-editar-usuario').classList.add('activo')
+  }
+
+  window.cerrarModalEditar = function() {
+    document.getElementById('modal-editar-usuario').classList.remove('activo')
+    usuarioEditando = null
+  }
+
+  window.guardarEdicionUsuario = async function(e) {
+    e.preventDefault()
+    if (!usuarioEditando) return
+
+    const id = document.getElementById('edit-id').value
+    const nombre = document.getElementById('edit-nombre').value.trim()
+    const apellido = document.getElementById('edit-apellido').value.trim()
+    const dni = document.getElementById('edit-dni').value.trim()
+    const email = document.getElementById('edit-email').value.trim()
+    const telefono = document.getElementById('edit-telefono').value.trim()
+
+    if (!nombre || !apellido || !dni || !email) {
+      mostrarPush('err', 'Error', 'Completá todos los campos obligatorios.')
+      return
+    }
+    if (!/^\d{7,8}$/.test(dni)) {
+      mostrarPush('err', 'Error', 'El DNI debe tener 7 u 8 dígitos.')
+      return
+    }
+
+    const telLimpio = telefono ? telefono.replace(/[^\d]/g, '') : null
+
+    const { error } = await supabase
+      .from('perfiles')
+      .update({ nombre, apellido, dni, email, telefono: telLimpio })
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error actualizando usuario:', error)
+      mostrarPush('err', 'Error', 'No se pudo actualizar el usuario.')
+      return
+    }
+
+    // Actualizar local
+    const idx = usuarios.findIndex(u => u.id === id)
+    if (idx !== -1) {
+      usuarios[idx] = { ...usuarios[idx], nombre, apellido, dni, email, telefono: telLimpio }
+    }
+
+    cerrarModalEditar()
+    pintarGestionUsuarios()
+    pintarAuditoriaDoctores()
+    mostrarPush('ok', 'Usuario actualizado', 'Los cambios fueron guardados correctamente.')
+  }
+
+  // Cerrar modal al hacer click fuera
+  document.getElementById('modal-editar-usuario').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalEditar()
+  })
+
+  // ── ACTUALIZAR MÉTRICAS ──
   function actualizarMetricas() {
-    document.getElementById('metric-usuarios').textContent = usuarios.length
-    document.getElementById('metric-pacientes').textContent = usuarios.filter(u => u.rol === 'paciente').length
     document.getElementById('metric-doctores').textContent = usuarios.filter(u => u.rol === 'doctor').length
-    document.getElementById('metric-turnos').textContent = turnosTotales
+    document.getElementById('metric-turnos').textContent = turnosDelDia
   }
 
   // ── HELPERS UI ──
@@ -265,26 +639,26 @@
     const rol = document.getElementById('adm-rol').value
 
     if (!nombre || !apellido || !dni || !telefono || !email || !rol) {
-      mostrarAlertaAlta('err', '⚠ Completá todos los campos para dar de alta al usuario.')
+      mostrarAlertaAlta('err', 'Completá todos los campos para dar de alta al usuario.')
       return
     }
     if (!/^\d{7,8}$/.test(dni)) {
-      mostrarAlertaAlta('err', '⚠ El DNI debe tener 7 u 8 dígitos.')
+      mostrarAlertaAlta('err', 'El DNI debe tener 7 u 8 dígitos.')
       return
     }
     const telLimpio = telefono.replace(/[^\d]/g, '')
     if (telLimpio.length < 7) {
-      mostrarAlertaAlta('err', '⚠ Ingresá un teléfono válido.')
+      mostrarAlertaAlta('err', 'Ingresá un teléfono válido.')
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      mostrarAlertaAlta('err', '⚠ Ingresá un email válido.')
+      mostrarAlertaAlta('err', 'Ingresá un email válido.')
       return
     }
 
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
-      mostrarAlertaAlta('err', '⚠ Sesión expirada. Volvé a iniciar sesión.')
+      mostrarAlertaAlta('err', 'Sesión expirada. Volvé a iniciar sesión.')
       return
     }
 
@@ -306,7 +680,7 @@
             telefono: telLimpio,
             email,
             rol,
-            password: dni  // Contraseña default = DNI
+            password: dni
           })
         }
       )
@@ -314,27 +688,27 @@
       const result = await response.json()
 
       if (!response.ok || result.error) {
-        mostrarAlertaAlta('err', '❌ ' + (result.error || 'No se pudo crear el usuario.'))
+        mostrarAlertaAlta('err', (result.error || 'No se pudo crear el usuario.'))
         setLoadingAlta(false)
         return
       }
 
-      // Recargar lista de usuarios
       await cargarUsuariosReales()
       actualizarMetricas()
+      pintarAuditoriaDoctores()
+      pintarGestionUsuarios()
 
       e.target.reset()
       setLoadingAlta(false)
-      mostrarAlertaAlta('ok', '✅ ¡Usuario creado! La contraseña inicial es el DNI.')
+      mostrarAlertaAlta('ok', 'Usuario creado. La contraseña inicial es el DNI.')
 
-      // Cambiar a la pestaña de usuarios para ver el resultado
       setTimeout(() => {
         cambiarSubseccion('global')
       }, 1500)
 
     } catch (err) {
       console.error('Error creando usuario:', err)
-      mostrarAlertaAlta('err', '❌ Error de conexión. Intentá de nuevo.')
+      mostrarAlertaAlta('err', 'Error de conexión. Intentá de nuevo.')
       setLoadingAlta(false)
     }
   }

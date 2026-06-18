@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <link rel="icon" type="image/png" href="../Logo-Healtcare.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
   <title>Panel Paciente · HealthCare Pediatría</title>
@@ -150,7 +151,7 @@
       <li class="sidebar-item" onclick="cambiarSubseccion('perfil'); cerrarSidebar()">⚙️ Configurar Perfil</li>
     </ul>
   </div>
-  <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+  <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">Cerrar Sesión</button>
 </div>
 
 <!-- MODAL NUEVO PACIENTE -->
@@ -241,7 +242,7 @@
         <li class="sidebar-item" onclick="cambiarSubseccion('perfil')">⚙️ Configurar Perfil</li>
       </ul>
     </div>
-    <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+    <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">Cerrar Sesión</button>
   </div>
 
   <!-- MAIN -->
@@ -250,9 +251,7 @@
       <div class="dash-header-info">
         <span class="badge badge-paciente">Paciente Activo</span>
         <h1 class="dash-titulo" id="saludo-usuario">¡Hola!</h1>
-      </div>
-      <div class="dash-header-meta">
-        <strong id="perfil-nombre">-</strong><br>DNI: <span id="perfil-dni">-</span>
+        <p class="dash-subtitulo" id="perfil-nombre" style="margin:4px 0 0; font-size:16px; color:var(--texto-s); font-weight:500">-</p>
       </div>
     </div>
 
@@ -544,15 +543,13 @@
     }
 
     const nuevoPaciente = {
-      id: 'p' + Date.now(),
       tutor_id: usuarioLogueado.id,
       nombre,
       nacimiento,
       dni,
       tipo_sangre: 'No especificado',
-      altura: 'No especificado',
-      alergias: 'Ninguna',
-      edad: calcularEdad(nacimiento)
+      altura: null,
+      alergias: 'Ninguna'
     }
 
     // Intentar guardar en Supabase
@@ -561,13 +558,18 @@
         .from('pacientes')
         .insert(nuevoPaciente)
         .select()
-      if (!error && data) {
+      if (error) {
+        console.error('Error guardando paciente:', error)
+        mostrarPush('err', 'Error al guardar', 'No se pudo registrar el paciente: ' + error.message)
+        return
+      }
+      if (data && data[0]) {
         pacientesRegistrados.push(data[0])
-      } else {
-        pacientesRegistrados.push(nuevoPaciente)
       }
     } catch (e) {
-      pacientesRegistrados.push(nuevoPaciente)
+      console.error('Error inesperado:', e)
+      mostrarPush('err', 'Error', 'Ocurrió un error inesperado al guardar el paciente.')
+      return
     }
 
     cerrarModal()

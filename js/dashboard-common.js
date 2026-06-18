@@ -49,15 +49,11 @@ export async function initDashboard(requiredRole) {
 function updateHeader(perfil) {
   const saludo = document.getElementById('saludo-usuario')
   const nombre = document.getElementById('perfil-nombre')
-  const dni = document.getElementById('perfil-dni')
 
   if (saludo) {
-    const hora = new Date().getHours()
-    const texto = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches'
-    saludo.textContent = `${texto}, ${perfil.nombre}`
+    saludo.textContent = `¡Hola! ${perfil.nombre}`
   }
   if (nombre) nombre.textContent = `${perfil.nombre} ${perfil.apellido}`
-  if (dni) dni.textContent = perfil.dni
 }
 
 // ── MOBILE MENU ──
@@ -68,11 +64,15 @@ function setupMobileMenu() {
 
   if (!toggle || !overlay || !menu) return
 
-  toggle.addEventListener('click', () => {
+  function abrirSidebar(e) {
+    e.preventDefault()
     overlay.classList.add('activo')
     menu.classList.add('activo')
     document.body.style.overflow = 'hidden'
-  })
+  }
+
+  toggle.addEventListener('click', abrirSidebar)
+  toggle.addEventListener('touchstart', abrirSidebar, { passive: false })
 
   overlay.addEventListener('click', cerrarSidebar)
   menu.querySelectorAll('a, [onclick*="cerrarSidebar"]').forEach(el => {
