@@ -29,8 +29,16 @@ function getServiceRoleKey(): string {
 }
 
 Deno.serve(async (req) => {
+  // CORS headers
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Max-Age': '86400'
+  }
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*' } })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
@@ -76,7 +84,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: authError.message }), { status: 500 })
     }
 
-    // 2. Crear perfil en tabla perfiles
+        // 2. Crear perfil en tabla perfiles
     const telefonoLimpio = telefono ? telefono.replace(/[^\d]/g, '') : null
     const { error: perfilError } = await supabase
       .from('perfiles')
@@ -89,7 +97,7 @@ Deno.serve(async (req) => {
         email,
         rol,
         activo: true,
-        last_sign_in_at: null
+        estado: 'libre'
       })
 
     if (perfilError) {
@@ -103,10 +111,10 @@ Deno.serve(async (req) => {
       success: true,
       userId: authData.user.id,
       message: `Usuario ${nombre} ${apellido} creado correctamente. Contraseña inicial: ${userPassword}`
-    }), { status: 200 })
+    }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
   } catch (err) {
     console.error('Error inesperado:', err)
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 })
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 })

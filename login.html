@@ -580,13 +580,14 @@
       return
     }
 
-    const telefonoLimpio = telefono.replace(/[^\d]/g, '')
+        const telefonoLimpio = telefono.replace(/[^\d]/g, '')
     const { error: errPerfil } = await supabase
       .from('perfiles')
-      .insert({ id: data.user.id, nombre, apellido, dni, email, telefono: telefonoLimpio, rol: 'paciente', estado: null })
+      .insert({ id: data.user.id, nombre, apellido, dni, email, telefono: telefonoLimpio, rol: 'paciente' })
 
     if (errPerfil) {
-      mostrarAlerta('alerta-registro', 'err', 'Error al guardar el perfil. Intentá de nuevo.')
+      console.error('DEBUG errPerfil:', errPerfil)
+      mostrarAlerta('alerta-registro', 'err', 'Error al guardar el perfil: ' + (errPerfil.message || 'desconocido'))
       setLoading('registro', false)
       return
     }
