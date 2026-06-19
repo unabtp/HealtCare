@@ -560,7 +560,12 @@
         .select()
       if (error) {
         console.error('Error guardando paciente:', error)
-        mostrarPush('err', 'Error al guardar', 'No se pudo registrar el paciente: ' + error.message)
+        // Detectar error de DNI duplicado (unique violation = código 23505)
+        if (error.code === '23505' || (error.message && error.message.includes('unique'))) {
+          mostrarPush('err', 'DNI duplicado', 'Ya existe un paciente con ese DNI. Usá otro número de documento.')
+        } else {
+          mostrarPush('err', 'Error al guardar', 'No se pudo registrar el paciente: ' + error.message)
+        }
         return
       }
       if (data && data[0]) {
@@ -828,7 +833,6 @@ HealthCare Pediatría - 2026`
     }
 
     const nuevoTurno = {
-      id: 't' + Date.now(),
       tutor_id: usuarioLogueado.id,
       paciente_id: pacienteSeleccionado.id,
       paciente_nombre: pacienteSeleccionado.nombre,
@@ -839,19 +843,24 @@ HealthCare Pediatría - 2026`
       estado: 'Confirmado'
     }
 
-    // Intentar guardar en Supabase
+    // Guardar en Supabase (id se genera automáticamente como uuid)
     try {
       const { data, error } = await supabase
         .from('turnos')
         .insert(nuevoTurno)
         .select()
-      if (!error && data) {
+      if (error) {
+        console.error('Error guardando turno:', error)
+        mostrarPush('err', 'Error al guardar turno', error.message)
+        return
+      }
+      if (data && data[0]) {
         turnosExistentes.push(data[0])
-      } else {
-        turnosExistentes.push(nuevoTurno)
       }
     } catch (e) {
-      turnosExistentes.push(nuevoTurno)
+      console.error('Error inesperado guardando turno:', e)
+      mostrarPush('err', 'Error', 'Ocurrió un error inesperado al guardar el turno.')
+      return
     }
 
     pintarTurnos()
@@ -890,8 +899,9 @@ HealthCare Pediatría - 2026`
     `).join('')
   }
   window.cancelarTurno = function(id) {
-    mostrarPush('warn', '¿Cancelar turno?', '¿Estás seguro de que querés cancelar este turno?',
-      `<button class="btn btn-sec" onclick="cerrarPush()">No, volver</button><button class="btn btn-peligro" onclick="confirmarCancelar('${id}')">Sí, cancelar</button>`)
+    if (confirm('¿Estás seguro de que querés cancelar este turno?')) {
+      confirmarCancelar(id)
+    }
   }
   window.confirmarCancelar = async function(id) {
     try {
@@ -931,15 +941,28 @@ HealthCare Pediatría - 2026`
     document.getElementById('p-pass-nueva').value = ''
   }
   window.cambiarEmail = async function() {
-    const email = document.getElementById('p-email-nuevo').value
+    const email = document.getElementById('p-email-nuevo').value.trim()
     if (!email.includes('@')) {
       mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
       return
     }
-    const { error } = await supabase.auth.updateUser({ email })
-    if (error) {
-      mostrarPush('err', 'Error', 'No se pudo actualizar el email.')
+    // 1. Actualizar email en auth.users
+    const { error: authError } = await supabase.auth.updateUser({ email })
+    if (authError) {
+      if (authError.message && authError.message.includes('recently')) {
+        mostrarPush('err', 'Sesión expirada', 'Tu sesión expiró. Cerrá sesión y volvé a iniciar para cambiar el email.')
+      } else {
+        mostrarPush('err', 'Error', 'No se pudo actualizar el email: ' + authError.message)
+      }
       return
+    }
+    // 2. Actualizar email en tabla perfiles
+    const { error: perfilError } = await supabase
+      .from('perfiles')
+      .update({ email: email })
+      .eq('id', usuarioLogueado.id)
+    if (perfilError) {
+      console.error('Error actualizando perfiles:', perfilError)
     }
     mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}. Revisá tu bandeja de entrada para confirmar.`)
     document.getElementById('p-email-nuevo').value = ''
