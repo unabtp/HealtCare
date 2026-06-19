@@ -311,7 +311,7 @@
       <!-- TURNOS EXISTENTES -->
       <div class="panel-data">
         <h3>📋 Próximos turnos programados</h3>
-        <div class="table-container">
+        <div class="table-container" id="turnos-table-container">
           <table class="tabla-hc" id="tabla-turnos">
             <thead>
               <tr><th>Paciente</th><th>Especialista</th><th>Fecha</th><th>Hora</th><th>Estado</th><th>Acciones</th></tr>
@@ -568,6 +568,7 @@
       dni,
       tipo_sangre: 'No especificado',
       altura: null,
+      peso: null,
       alergias: 'Ninguna'
     }
 
@@ -648,28 +649,62 @@
     const grid = document.getElementById('calendario-grid')
     const hoy = new Date()
     const diasSemana = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
-    let html = ''
+    const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']
 
-    for (let i = 0; i < 14; i++) {
+    // Generar los próximos 30 días, filtrar solo disponibles
+    const diasDisponibles = []
+    for (let i = 0; i < 30; i++) {
       const fecha = new Date(hoy)
       fecha.setDate(hoy.getDate() + i)
       const diaSem = fecha.getDay()
       const diaNum = fecha.getDate()
-      const mes = fecha.getMonth() + 1
-      const fechaStr = `${fecha.getFullYear()}-${String(mes).padStart(2,'0')}-${String(diaNum).padStart(2,'0')}`
+      const mesIdx = fecha.getMonth()
+      const fechaStr = `${fecha.getFullYear()}-${String(mesIdx + 1).padStart(2,'0')}-${String(diaNum).padStart(2,'0')}`
 
       const disponible = doctorSeleccionado && doctorSeleccionado.dias.includes(diaSem)
       const ocupado = turnosExistentes.filter(t => t.doctor_id === doctorSeleccionado.id && t.fecha === fechaStr).length >= 3
-      let clase = 'cal-dia'
-      if (!disponible) clase += ' ocupado'
-      else if (ocupado) clase += ' ocupado'
-      else clase += ' disponible'
 
-      html += `<div class="${clase}" id="dia-${fechaStr}" onclick="seleccionarDia('${fechaStr}', ${disponible && !ocupado})">
-        <div class="cal-dia-nombre">${diasSemana[diaSem]}</div>
-        <div class="cal-dia-numero">${diaNum}</div>
-      </div>`
+      if (disponible && !ocupado) {
+        diasDisponibles.push({
+          fechaStr,
+          diaSem,
+          diaNum,
+          mesIdx,
+          mesLabel: meses[mesIdx]
+        })
+      }
     }
+
+    if (diasDisponibles.length === 0) {
+      grid.innerHTML = '<p style="color:var(--texto-s);font-size:14px;text-align:center;padding:20px">No hay días disponibles para este especialista en los próximos 30 días.</p>'
+      return
+    }
+
+    // Agrupar por mes
+    let html = ''
+    let mesActual = -1
+    let diasHtml = ''
+
+    diasDisponibles.forEach((d, idx) => {
+      if (d.mesIdx !== mesActual) {
+        if (mesActual !== -1) {
+          html += `<div class="cal-mes-grupo"><div class="cal-mes-label">${meses[mesActual]}</div><div class="cal-mes-dias">${diasHtml}</div></div>`
+        }
+        mesActual = d.mesIdx
+        diasHtml = ''
+      }
+
+      diasHtml += `<div class="cal-dia disponible" id="dia-${d.fechaStr}" onclick="seleccionarDia('${d.fechaStr}', true)">
+        <div class="cal-dia-nombre">${diasSemana[d.diaSem]}</div>
+        <div class="cal-dia-numero">${d.diaNum}</div>
+      </div>`
+
+      // Cerrar último mes
+      if (idx === diasDisponibles.length - 1) {
+        html += `<div class="cal-mes-grupo"><div class="cal-mes-label">${d.mesLabel}</div><div class="cal-mes-dias">${diasHtml}</div></div>`
+      }
+    })
+
     grid.innerHTML = html
   }
   window.seleccionarDia = function(fecha, disponible) {
@@ -764,6 +799,7 @@
       <div class="ficha-item"><div class="ficha-label">Fecha de nacimiento</div><div class="ficha-valor">${p.nacimiento}</div></div>
       <div class="ficha-item"><div class="ficha-label">Tipo de sangre</div><div class="ficha-valor">${p.tipo_sangre || 'No especificado'}</div></div>
       <div class="ficha-item"><div class="ficha-label">Altura</div><div class="ficha-valor">${p.altura || 'No especificado'}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Peso</div><div class="ficha-valor">${p.peso || 'No especificado'}</div></div>
       <div class="ficha-item"><div class="ficha-label">Alergias</div><div class="ficha-valor">${p.alergias || 'Ninguna'}</div></div>
     `
   }

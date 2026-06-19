@@ -246,8 +246,17 @@
 .table-container {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  margin: 0 calc(-1 * var(--content-pad));
-  padding: 0 var(--content-pad);
+  margin: 0;
+  padding: 0;
+  /* Scroll solo dentro del contenedor, sin afectar la página */
+  scrollbar-width: thin;
+}
+.table-container::-webkit-scrollbar {
+  height: 4px;
+}
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--borde);
+  border-radius: var(--radio-full);
 }
 
 .tabla-hc {
@@ -581,13 +590,46 @@
 
 /* ── CALENDARIO PACIENTE ── */
 .calendario-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  /* Scroll solo dentro del contenedor */
 }
+.calendario-grid::-webkit-scrollbar {
+  height: 4px;
+}
+.calendario-grid::-webkit-scrollbar-thumb {
+  background: var(--borde);
+  border-radius: var(--radio-full);
+}
+
+/* Grupo de mes dentro del calendario */
+.cal-mes-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.cal-mes-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-s);
+  text-align: center;
+}
+.cal-mes-dias {
+  display: flex;
+  gap: 8px;
+}
+
 .cal-dia {
-  aspect-ratio: 1;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -762,4 +804,3 @@
   font-size: 22px;
   margin-bottom: 20px;
 }
-
