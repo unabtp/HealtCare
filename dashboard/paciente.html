@@ -413,24 +413,42 @@
   let turnosExistentes = []
   let historialClinico = []
 
-  // Lista de doctores/especialistas (estática hasta tener tabla en Supabase)
-  // Basada en las capturas del usuario + 2 nuevos especialistas
-  let doctores = [
-    { id: 'd1', nombre: 'Dr. Carlos Bianchi', especialidad: 'Pediatría General', sexo: 'M', avatar: '👨‍⚕️',
-      dias: [1,2,3,4,5], horarios: ['09:00','09:30','10:00','10:30','11:00','15:00','15:30','16:00'] },
-    { id: 'd2', nombre: 'Dra. Sofía Martínez', especialidad: 'Neonatología', sexo: 'F', avatar: '👩‍⚕️',
-      dias: [1,3,5], horarios: ['08:30','09:00','09:30','10:00','14:00','14:30','15:00'] },
-    { id: 'd3', nombre: 'Dr. Martín Rodríguez', especialidad: 'Cardiología Pediátrica', sexo: 'M', avatar: '👨‍⚕️',
-      dias: [2,4], horarios: ['10:00','10:30','11:00','11:30','16:00','16:30','17:00'] },
-    { id: 'd4', nombre: 'Dra. Luciana Fernández', especialidad: 'Neumonología Infantil', sexo: 'F', avatar: '👩‍⚕️',
-      dias: [1,2,4,5], horarios: ['09:00','09:30','10:00','11:00','15:30','16:00','16:30'] },
-    { id: 'd5', nombre: 'Dr. Nahuel Salazar', especialidad: 'Infectología Pediátrica', sexo: 'M', avatar: '👨‍⚕️',
-      dias: [3,5], horarios: ['08:00','08:30','09:00','09:30','14:00','14:30','15:00'] },
-    { id: 'd6', nombre: 'Dra. Allice Downelly', especialidad: 'Pediatría General', sexo: 'F', avatar: '👩‍⚕️',
-      dias: [1,2,3,4,5], horarios: ['09:00','09:30','10:00','10:30','11:00','15:00','15:30','16:00','16:30'] },
-    { id: 'd7', nombre: 'Dra. Lesly Goldberg', especialidad: 'Radiología Pediátrica', sexo: 'F', avatar: '👩‍⚕️',
-      dias: [1,2,3,4], horarios: ['08:00','08:30','09:00','09:30','10:00','14:00','14:30','15:00','15:30'] }
-  ]
+  // Lista de doctores - se carga desde tabla 'doctores' en Supabase
+  let doctores = []
+  let doctoresCargados = false
+
+  async function cargarDoctores() {
+    try {
+      const { data, error } = await supabase
+        .from('doctores')
+        .select('id, nombre, apellido, especialidad, dias, horarios, estado')
+        .eq('activo', true)
+        .order('nombre', { ascending: true })
+      if (error) {
+        console.error('Error cargando doctores:', error)
+        return
+      }
+      if (data && data.length > 0) {
+        doctores = data.map(d => {
+          const titulo = d.nombre + ' ' + d.apellido
+          const esMujer = d.nombre.endsWith('a') || d.nombre.endsWith('á') || ['Sofía','Luciana','Allice','Lesly'].includes(d.nombre)
+          return {
+            id: d.id,
+            nombre: (esMujer ? 'Dra. ' : 'Dr. ') + titulo,
+            especialidad: d.especialidad || 'Pediatría General',
+            sexo: esMujer ? 'F' : 'M',
+            avatar: esMujer ? '👩‍⚕️' : '👨‍⚕️',
+            dias: d.dias || [1,2,3,4,5],
+            horarios: d.horarios || ['09:00','10:00','11:00','15:00','16:00']
+          }
+        })
+        doctoresCargados = true
+        pintarDoctores()
+      }
+    } catch (e) {
+      console.error('Error inesperado cargando doctores:', e)
+    }
+  }
 
   let doctorSeleccionado = null
   let diaSeleccionado = null
@@ -447,6 +465,7 @@
     usuarioLogueado = perfil
 
     // Cargar datos reales desde Supabase
+    await cargarDoctores()  // ← Cargar doctores reales primero (con UUIDs)
     await cargarPacientes()
     await cargarTurnos()
     await cargarHistorial()
@@ -946,17 +965,32 @@ HealthCare Pediatría - 2026`
       mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
       return
     }
-    // 1. Actualizar email en auth.users
-    const { error: authError } = await supabase.auth.updateUser({ email })
-    if (authError) {
-      if (authError.message && authError.message.includes('recently')) {
-        mostrarPush('err', 'Sesión expirada', 'Tu sesión expiró. Cerrá sesión y volvé a iniciar para cambiar el email.')
-      } else {
-        mostrarPush('err', 'Error', 'No se pudo actualizar el email: ' + authError.message)
-      }
+
+    // Pedir contraseña actual para re-autenticación (evita error "recently logged in")
+    const password = prompt('Por seguridad, ingresá tu contraseña actual para confirmar el cambio de email:')
+    if (!password) {
+      mostrarPush('err', 'Cancelado', 'No ingresaste la contraseña. El email no fue cambiado.')
       return
     }
-    // 2. Actualizar email en tabla perfiles
+
+    // 1. Re-autenticar con contraseña actual
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: usuarioLogueado.email,
+      password: password
+    })
+    if (authError) {
+      mostrarPush('err', 'Contraseña incorrecta', 'La contraseña ingresada no es válida.')
+      return
+    }
+
+    // 2. Actualizar email en auth.users (ahora con sesión fresca)
+    const { error: updateError } = await supabase.auth.updateUser({ email })
+    if (updateError) {
+      mostrarPush('err', 'Error', 'No se pudo actualizar el email: ' + updateError.message)
+      return
+    }
+
+    // 3. Actualizar email en tabla perfiles
     const { error: perfilError } = await supabase
       .from('perfiles')
       .update({ email: email })
@@ -964,6 +998,7 @@ HealthCare Pediatría - 2026`
     if (perfilError) {
       console.error('Error actualizando perfiles:', perfilError)
     }
+
     mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}. Revisá tu bandeja de entrada para confirmar.`)
     document.getElementById('p-email-nuevo').value = ''
   }

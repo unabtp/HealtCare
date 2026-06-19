@@ -126,7 +126,7 @@ window.mostrarPush = function(tipo, titulo, msg, botones = '') {
   document.getElementById('push-icon').textContent = tipo === 'ok' ? '✅' : tipo === 'err' ? '❌' : '⚠️'
   document.getElementById('push-titulo').textContent = titulo
   document.getElementById('push-msg').textContent = msg
-  document.getElementById('push-botones').innerHTML = botones || '<button class="btn btn-prim" onclick="window.pushNotification.close()">Aceptar</button>'
+  document.getElementById('push-botones').innerHTML = botones || '<button class="btn btn-prim" onclick="cerrarPush()">Aceptar</button>'
   box.className = 'push-box ' + tipo
   overlay.classList.add('activo')
 }
