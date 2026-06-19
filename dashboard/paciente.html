@@ -476,9 +476,11 @@
     pintarTurnos()
     actualizarMetricas()
 
-    // Activar modo cards en mobile para tablas
+    // Activar modo cards en mobile SOLO para tablas que NO sean turnos
     if (window.innerWidth < 769) {
-      document.querySelectorAll('.table-container').forEach(c => c.classList.add('table-cards'))
+      document.querySelectorAll('.table-container').forEach(c => {
+        if (!c.id.includes('turnos')) c.classList.add('table-cards')
+      })
     }
   }
   init()
@@ -649,11 +651,11 @@
     const grid = document.getElementById('calendario-grid')
     const hoy = new Date()
     const diasSemana = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
-    const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
-    // Generar los próximos 30 días, filtrar solo disponibles
+    // Generar los próximos 60 días, filtrar solo disponibles
     const diasDisponibles = []
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 60; i++) {
       const fecha = new Date(hoy)
       fecha.setDate(hoy.getDate() + i)
       const diaSem = fecha.getDay()
@@ -676,36 +678,54 @@
     }
 
     if (diasDisponibles.length === 0) {
-      grid.innerHTML = '<p style="color:var(--texto-s);font-size:14px;text-align:center;padding:20px">No hay días disponibles para este especialista en los próximos 30 días.</p>'
+      grid.innerHTML = '<p style="color:var(--texto-s);font-size:14px;text-align:center;padding:20px">No hay días disponibles para este especialista en los próximos 60 días.</p>'
       return
     }
 
-    // Agrupar por mes
+    // Agrupar por mes y armar filas de 4 días (2 filas = 8 días visibles por mes)
     let html = ''
     let mesActual = -1
-    let diasHtml = ''
+    let diasDelMes = []
 
     diasDisponibles.forEach((d, idx) => {
       if (d.mesIdx !== mesActual) {
+        // Cerrar mes anterior
         if (mesActual !== -1) {
-          html += `<div class="cal-mes-grupo"><div class="cal-mes-label">${meses[mesActual]}</div><div class="cal-mes-dias">${diasHtml}</div></div>`
+          html += renderMesGrupo(meses[mesActual], diasDelMes)
         }
         mesActual = d.mesIdx
-        diasHtml = ''
+        diasDelMes = []
       }
-
-      diasHtml += `<div class="cal-dia disponible" id="dia-${d.fechaStr}" onclick="seleccionarDia('${d.fechaStr}', true)">
-        <div class="cal-dia-nombre">${diasSemana[d.diaSem]}</div>
-        <div class="cal-dia-numero">${d.diaNum}</div>
-      </div>`
+      diasDelMes.push(d)
 
       // Cerrar último mes
       if (idx === diasDisponibles.length - 1) {
-        html += `<div class="cal-mes-grupo"><div class="cal-mes-label">${d.mesLabel}</div><div class="cal-mes-dias">${diasHtml}</div></div>`
+        html += renderMesGrupo(d.mesLabel, diasDelMes)
       }
     })
 
     grid.innerHTML = html
+  }
+
+  function renderMesGrupo(mesNombre, dias) {
+    const diasSemana = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+    // Dividir en filas de 4 días
+    const filas = []
+    for (let i = 0; i < dias.length; i += 4) {
+      filas.push(dias.slice(i, i + 4))
+    }
+
+    let filasHtml = filas.map(fila => {
+      const diasHtml = fila.map(d => `
+        <div class="cal-dia disponible" id="dia-${d.fechaStr}" onclick="seleccionarDia('${d.fechaStr}', true)">
+          <div class="cal-dia-nombre">${diasSemana[d.diaSem]}</div>
+          <div class="cal-dia-numero">${d.diaNum}</div>
+        </div>
+      `).join('')
+      return `<div class="cal-mes-fila">${diasHtml}</div>`
+    }).join('')
+
+    return `<div class="cal-mes-grupo"><div class="cal-mes-label">${mesNombre}</div><div class="cal-mes-dias">${filasHtml}</div></div>`
   }
   window.seleccionarDia = function(fecha, disponible) {
     if (!disponible) return
@@ -938,7 +958,7 @@ HealthCare Pediatría - 2026`
     const filtrados = turnosExistentes
 
     if (!filtrados.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--texto-s)">No tenés turnos programados.</td></tr>'
+      tbody.innerHTML = '<tr class="turno-empty"><td colspan="6" style="text-align:center; color:var(--texto-s)">No tenés turnos programados.</td></tr>'
       return
     }
 
