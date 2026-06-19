@@ -590,7 +590,12 @@
     })
 
     if (error) {
-      mostrarAlerta('alerta-registro', 'err', tradError(error.message))
+      let msg = tradError(error.message)
+      // Si el email ya existe en auth.users pero el perfil fue borrado
+      if (error.message.includes('User already registered')) {
+        msg = 'Ya existe una cuenta con ese email. Si la eliminaste, contactá al administrador.'
+      }
+      mostrarAlerta('alerta-registro', 'err', msg)
       setLoading('registro', false)
       return
     }
@@ -602,7 +607,12 @@
 
     if (errPerfil) {
       console.error('DEBUG errPerfil:', errPerfil)
-      mostrarAlerta('alerta-registro', 'err', 'Error al guardar el perfil: ' + (errPerfil.message || 'desconocido'))
+      let msg = 'Error al guardar el perfil: ' + (errPerfil.message || 'desconocido')
+      // Si el perfil ya existe (foreign key o duplicate)
+      if (errPerfil.message && errPerfil.message.includes('foreign key')) {
+        msg = 'Ya existe una cuenta con ese email. Si la eliminaste, contactá al administrador.'
+      }
+      mostrarAlerta('alerta-registro', 'err', msg)
       setLoading('registro', false)
       return
     }
