@@ -978,9 +978,10 @@ HealthCare Pediatría - 2026`
     `).join('')
   }
   window.cancelarTurno = function(id) {
-    if (confirm('¿Estás seguro de que querés cancelar este turno?')) {
-      confirmarCancelar(id)
-    }
+    mostrarPush('warn', 'Cancelar turno', '¿Estás seguro de que querés cancelar este turno?', `
+      <button class="btn btn-sec" onclick="cerrarPush()">No, volver</button>
+      <button class="btn btn-peligro" onclick="cerrarPush(); confirmarCancelar('${id}')">Sí, cancelar</button>
+    `)
   }
   window.confirmarCancelar = async function(id) {
     try {
