@@ -557,6 +557,10 @@
     const nombre = document.getElementById('np-nombre').value.trim()
     const nacimiento = document.getElementById('np-nacimiento').value
     const dni = document.getElementById('np-dni').value.trim()
+      if (!/^[0-9]{8}$/.test(dni)) {
+        mostrarPush('err', 'DNI inválido', 'El DNI debe tener exactamente 8 números.')
+        return
+    }
 
     if (!usuarioLogueado) {
       mostrarPush('err', 'Error', 'Debes iniciar sesión para agregar pacientes.')
