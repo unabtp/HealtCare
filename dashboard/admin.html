@@ -338,7 +338,7 @@
     await cargarUsuariosReales()
     await cargarTurnosDelDia()
     actualizarMetricas()
-    pintarAuditoriaDoctores()
+    await pintarAuditoriaDoctores()
     pintarGestionUsuarios()
 
     if (window.innerWidth < 769) {
@@ -695,7 +695,7 @@
 
       await cargarUsuariosReales()
       actualizarMetricas()
-      pintarAuditoriaDoctores()
+      await pintarAuditoriaDoctores()
       pintarGestionUsuarios()
 
       e.target.reset()
