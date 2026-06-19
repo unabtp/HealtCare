@@ -240,12 +240,12 @@
         <div class="alerta" id="alerta-login"></div>
         <form id="form-login" onsubmit="submitLogin(event)" novalidate>
           <div class="campo">
-            <label for="l-email">Email o teléfono</label>
+            <label for="l-email">Email, teléfono o DNI</label>
             <div class="input-wrap">
               <span class="input-ico">✉️</span>
-              <input type="text" id="l-email" placeholder="tu@email.com o +54 11..." autocomplete="email">
+              <input type="text" id="l-email" placeholder="tu@email.com, teléfono o DNI" autocomplete="email">
             </div>
-            <p class="msg-error" id="err-l-email">⚠ Ingresá un email válido o un teléfono numérico.</p>
+            <p class="msg-error" id="err-l-email">⚠ Ingresá un email válido, teléfono (10 números) o DNI (8 números).</p>
           </div>
           <div class="campo">
             <label for="l-pass">Contraseña</label>
@@ -308,9 +308,9 @@
             <label for="r-telefono">Teléfono</label>
             <div class="input-wrap">
               <span class="input-ico">📞</span>
-              <input type="tel" id="r-telefono" placeholder="+54 11 4000-0000" autocomplete="tel">
+              <input type="tel" id="r-telefono" placeholder="1140000000" autocomplete="tel" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
-            <p class="msg-error" id="err-r-telefono">⚠ Ingresá un teléfono válido.</p>
+            <p class="msg-error" id="err-r-telefono">⚠ Ingresá un teléfono válido (10 números, ej: 1140000000).</p>
           </div>
           <div class="campo">
             <label for="r-email">Correo electrónico</label>
@@ -457,21 +457,36 @@
     const pass  = document.getElementById('l-pass').value
     let ok = true
 
-    // Detectar si es teléfono (solo números, +, espacios, guiones) o email
-    const esTelefono = /^[\d\+\s\-]+$/.test(input) && input.replace(/[^\d]/g, '').length >= 7
+    // Detectar tipo de input: email, teléfono (10 dígitos) o DNI (8 dígitos)
+    const soloNumeros = input.replace(/[^\d]/g, '')
+    const esTelefono = /^[\d\+\s\-]+$/.test(input) && soloNumeros.length === 10
+    const esDNI = /^\d{8}$/.test(soloNumeros) && !input.includes('@') && !input.includes('+')
     let email = input
 
     if (esTelefono) {
       // Buscar email por teléfono en la tabla perfiles
-      const telefonoLimpio = input.replace(/[^\d]/g, '')
       const { data: perfilData, error: perfilError } = await supabase
         .from('perfiles')
         .select('email')
-        .eq('telefono', telefonoLimpio)
+        .eq('telefono', soloNumeros)
         .single()
 
       if (perfilError || !perfilData) {
         mostrarAlerta('alerta-login', 'err', 'No encontramos una cuenta con ese teléfono.')
+        setLoading('login', false)
+        return
+      }
+      email = perfilData.email
+    } else if (esDNI) {
+      // Buscar email por DNI en la tabla perfiles
+      const { data: perfilData, error: perfilError } = await supabase
+        .from('perfiles')
+        .select('email')
+        .eq('dni', soloNumeros)
+        .single()
+
+      if (perfilError || !perfilData) {
+        mostrarAlerta('alerta-login', 'err', 'No encontramos una cuenta con ese DNI.')
         setLoading('login', false)
         return
       }
@@ -546,7 +561,7 @@
     marcar('r-dni', dniOk); mostrarError('err-r-dni', !dniOk)
     if (!dniOk) ok = false
 
-    const telOk = telefono.replace(/[^\d]/g, '').length >= 7
+    const telOk = telefono.replace(/[^\d]/g, '').length === 10
     marcar('r-telefono', telOk); mostrarError('err-r-telefono', !telOk)
     if (!telOk) ok = false
 
