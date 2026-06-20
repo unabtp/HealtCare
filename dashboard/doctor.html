@@ -470,7 +470,10 @@
       </div>
 
       <div class="panel-data">
-        <h3>📋 Pacientes citados para hoy</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px">
+          <h3 style="margin:0">📋 Pacientes citados para hoy</h3>
+          <button class="btn btn-sec btn-sm" onclick="refrescarAgenda()">🔄 Refrescar</button>
+        </div>
         <div class="table-container" id="agenda-table-container">
           <table class="tabla-hc">
             <thead>
@@ -590,26 +593,6 @@
   import { initDashboard } from '../js/dashboard-common.js'
   import { supabase } from '../js/supabaseClient.js'
 
-  // ═══════════════════════════════════════════════════════════════════
-  //  ARQUITECTURA DOCTOR / PERFILES (2026-06-20)
-  //  ═══════════════════════════════════════════════════════════════════
-  //  Este dashboard lee y escribe en la tabla 'doctores', que es la
-  //  ÚNICA fuente de verdad para datos médicos de TODOS los doctores.
-  //
-  //  El sync con 'perfiles' (auth) se hace automáticamente al iniciar
-  //  sesión vía dashboard-common.js → syncDoctorToDoctores(). Esto
-  //  garantiza que el doctor logueable (Dr. Pedro) exista en 'doctores'
-  //  con su UUID de auth, manteniendo consistencia.
-  //
-  //  Campos que guarda este dashboard en 'doctores':
-  //    • fechas_disponibles (text[]) — días específicos disponibles
-  //    • horarios (text[]) — franjas horarias de atención
-  //    • nombre, apellido, email, telefono (sync desde perfiles)
-  //
-  //  El paciente lee estos mismos datos de 'doctores' para mostrar
-  //  disponibilidad en tiempo real.
-  //  ═══════════════════════════════════════════════════════════════════
-
   let usuarioLogueado = null
   let turnosHoy = []
   let pacientes = []
@@ -659,8 +642,16 @@
   //  ═══════════════════════════════════════════
   async function cargarTurnosHoy() {
     if (!usuarioLogueado) return
+
+    // FIX: Usar fecha local en formato YYYY-MM-DD sin timezone issues
     const hoy = new Date()
-    const fechaStr = hoy.toISOString().split('T')[0]
+    const anio = hoy.getFullYear()
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0')
+    const dia = String(hoy.getDate()).padStart(2, '0')
+    const fechaStr = `${anio}-${mes}-${dia}`
+
+    console.log('[DEBUG] Buscando turnos para:', fechaStr, 'doctor_id:', usuarioLogueado.id)
+
     try {
       const { data, error } = await supabase
         .from('turnos')
@@ -668,11 +659,17 @@
         .eq('doctor_id', usuarioLogueado.id)
         .eq('fecha', fechaStr)
         .order('hora', { ascending: true })
+
+      console.log('[DEBUG] Resultado:', { error, data_count: data ? data.length : 0, data })
+
       if (!error && data) {
         turnosHoy = data.map(t => ({
           ...t,
           estado: t.estado || 'pendiente'
         }))
+      } else if (error) {
+        console.error('[DEBUG] Error en query:', error)
+        turnosHoy = []
       }
     } catch (e) {
       console.error('Error cargando turnos:', e)
@@ -714,10 +711,6 @@
     }
   }
 
-  // ═══════════════════════════════════════════
-  //  CARGAR DISPONIBILIDAD desde 'doctores'
-  //  Fuente de verdad: tabla 'doctores' (única)
-  //  ═══════════════════════════════════════════
   async function cargarCalendarioDoctor() {
     if (!usuarioLogueado) return
     try {
@@ -764,7 +757,17 @@
   // ═══════════════════════════════════════════
   //  AGENDA
   //  ═══════════════════════════════════════════
-  function pintarAgenda() {
+  window.refrescarAgenda = async function() {
+    console.log('[DEBUG] Refrescando agenda...')
+    await cargarTurnosHoy()
+    await cargarPacientes()
+    pintarAgenda()
+    pintarPacientes()
+    actualizarMetricas()
+    mostrarPush('ok', 'Agenda actualizada', 'Los turnos fueron recargados.')
+  }
+
+function pintarAgenda() {
     const tbody = document.getElementById('tabla-doctor-agenda')
     if (!turnosHoy.length) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--texto-s)">No hay turnos para hoy.</td></tr>'
@@ -1184,12 +1187,6 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     pintarHorariosEditor()
   }
 
-  // ═══════════════════════════════════════════
-  //  GUARDAR DISPONIBILIDAD en 'doctores'
-  //  Upsert: crea o actualiza el registro del doctor.
-  //  Nota: el id es el UUID de auth (perfiles.id), que coincide
-  //  con doctores.id gracias al sync en dashboard-common.js.
-  //  ═══════════════════════════════════════════
   window.subirCalendario = async function() {
     const diasCount = fechasDisponibles.length
 
