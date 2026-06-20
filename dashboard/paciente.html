@@ -1267,7 +1267,7 @@
     // 1. Re-autenticar con contraseña actual
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: usuarioLogueado.email,
-      password: password
+      password: passActual   // ← la variable que leíste del input
     })
     if (authError) {
       mostrarPush('err', 'Contraseña incorrecta', 'La contraseña ingresada no es válida.')
