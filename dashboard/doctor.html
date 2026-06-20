@@ -127,15 +127,56 @@
       border-radius: var(--radio-lg);
       padding: 16px;
     }
+    .cal-mes-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--verde-claro);
+      border-radius: var(--radio-md);
+      cursor: pointer;
+      transition: all .2s;
+      margin-bottom: 12px;
+      user-select: none;
+    }
+    .cal-mes-header:hover {
+      background: var(--verde-mid);
+    }
+    .cal-mes-header.activo {
+      background: var(--verde);
+      color: var(--blanco);
+    }
+    .cal-mes-header.activo .cal-mes-label {
+      color: var(--blanco);
+    }
+    .cal-mes-header.activo .cal-mes-flecha {
+      color: var(--blanco);
+    }
     .cal-mes-label {
       font-family: var(--font-titulo);
       font-size: 18px;
       font-weight: 600;
       color: var(--verde);
-      margin-bottom: 12px;
-      text-align: center;
-      padding-bottom: 8px;
-      border-bottom: 2px solid var(--verde-claro);
+      margin: 0;
+    }
+    .cal-mes-flecha {
+      font-size: 14px;
+      color: var(--verde);
+      transition: transform .3s;
+    }
+    .cal-mes-header.activo .cal-mes-flecha {
+      transform: rotate(180deg);
+    }
+    .cal-mes-contenido {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .3s ease-out, opacity .3s ease-out;
+      opacity: 0;
+    }
+    .cal-mes-contenido.abierto {
+      max-height: 600px;
+      opacity: 1;
     }
     .cal-dias-header {
       display: grid;
@@ -962,15 +1003,35 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     let html = ''
     for (let mesOffset = 0; mesOffset < 3; mesOffset++) {
       const fechaMes = new Date(hoy.getFullYear(), hoy.getMonth() + mesOffset, 1)
-      html += generarMesHTML(fechaMes, hoy)
+      html += generarMesHTML(fechaMes, hoy, mesOffset)
     }
     wrapper.innerHTML = html
   }
 
-  function generarMesHTML(fechaMes, hoy) {
+  window.toggleMes = function(mesId) {
+    const grupo = document.getElementById(mesId)
+    const header = grupo.querySelector('.cal-mes-header')
+    const contenido = grupo.querySelector('.cal-mes-contenido')
+    const estaAbierto = contenido.classList.contains('abierto')
+
+    // Cerrar todos los meses primero
+    document.querySelectorAll('.cal-mes-contenido').forEach(c => c.classList.remove('abierto'))
+    document.querySelectorAll('.cal-mes-header').forEach(h => h.classList.remove('activo'))
+
+    // Si estaba cerrado, abrirlo. Si estaba abierto, dejarlo cerrado (toggle)
+    if (!estaAbierto) {
+      contenido.classList.add('abierto')
+      header.classList.add('activo')
+    }
+  }
+
+  function generarMesHTML(fechaMes, hoy, mesIndex) {
     const anio = fechaMes.getFullYear()
     const mes = fechaMes.getMonth()
     const nombreMes = MESES[mes] + ' ' + anio
+    const mesId = `mes-${mesIndex}`
+    const estaAbierto = mesIndex === 0 ? 'abierto' : '' // Primer mes abierto por defecto
+    const headerActivo = mesIndex === 0 ? 'activo' : ''
 
     // Primer día del mes (0=Dom, 1=Lun, ...)
     const primerDia = new Date(anio, mes, 1).getDay()
@@ -1017,10 +1078,15 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     }
 
     return `
-      <div class="cal-mes-grupo">
-        <div class="cal-mes-label">${nombreMes}</div>
-        <div class="cal-dias-header">${headerHtml}</div>
-        <div class="cal-dias-grid">${celdasHtml}</div>
+      <div class="cal-mes-grupo" id="${mesId}">
+        <div class="cal-mes-header ${headerActivo}" onclick="toggleMes('${mesId}')">
+          <span class="cal-mes-label">${nombreMes}</span>
+          <span class="cal-mes-flecha">▼</span>
+        </div>
+        <div class="cal-mes-contenido ${estaAbierto}">
+          <div class="cal-dias-header">${headerHtml}</div>
+          <div class="cal-dias-grid">${celdasHtml}</div>
+        </div>
       </div>
     `
   }
