@@ -705,7 +705,7 @@
 
       const { data: turnosData, error: turnosErr } = await supabase
         .from('turnos')
-        .select('paciente_id, paciente_nombre')
+        .select('paciente_id, paciente_nombre, tutor_id')
         .eq('doctor_id', usuarioLogueado.id)
 
       console.log('[DIAG] turnosData:', turnosData, 'error:', turnosErr)
@@ -716,29 +716,54 @@
         return
       }
 
+      // Estrategia 1: buscar por paciente_id (turnos nuevos)
       const pacienteIds = [...new Set(turnosData.map(t => t.paciente_id).filter(Boolean))]
-      console.log('[DIAG] pacienteIds únicos:', pacienteIds)
+      console.log('[DIAG] pacienteIds únicos (desde turnos):', pacienteIds)
 
-      if (pacienteIds.length === 0) {
-        console.log('[DIAG] No hay pacienteIds, pacientes = []')
-        pacientes = []
-        return
+      let pacientesEncontrados = []
+
+      if (pacienteIds.length > 0) {
+        const { data, error } = await supabase
+          .from('pacientes')
+          .select('*')
+          .in('id', pacienteIds)
+        if (!error && data) {
+          pacientesEncontrados = data
+          console.log('[DIAG] pacientes encontrados por ID:', pacientesEncontrados.length)
+        }
       }
 
-      const { data, error } = await supabase
-        .from('pacientes')
-        .select('*')
-        .in('id', pacienteIds)
+      // Estrategia 2: fallback por paciente_nombre (turnos viejos sin paciente_id)
+      const nombresSinId = [...new Set(
+        turnosData
+          .filter(t => !t.paciente_id && t.paciente_nombre)
+          .map(t => ({ nombre: t.paciente_nombre.trim(), tutor_id: t.tutor_id }))
+      )]
+      console.log('[DIAG] nombres sin paciente_id:', nombresSinId)
 
-      console.log('[DIAG] pacientes data:', data, 'error:', error)
+      if (nombresSinId.length > 0) {
+        for (const item of nombresSinId) {
+          const { data, error } = await supabase
+            .from('pacientes')
+            .select('*')
+            .ilike('nombre', item.nombre)
+            .eq('tutor_id', item.tutor_id)
+            .limit(1)
 
-      if (!error && data) {
-        pacientes = data
-        console.log('[DIAG] pacientes cargados:', pacientes.length)
-      } else {
-        console.error('[DIAG] Error select pacientes:', error)
-        pacientes = []
+          if (!error && data && data.length > 0) {
+            // Evitar duplicados
+            const yaExiste = pacientesEncontrados.some(p => p.id === data[0].id)
+            if (!yaExiste) {
+              pacientesEncontrados.push(data[0])
+              console.log('[DIAG] paciente encontrado por nombre fallback:', data[0].nombre)
+            }
+          }
+        }
       }
+
+      pacientes = pacientesEncontrados
+      console.log('[DIAG] Total pacientes cargados:', pacientes.length)
+
     } catch (e) {
       console.error('Error cargando pacientes:', e)
       pacientes = []
@@ -847,23 +872,48 @@
     // Cargar datos del paciente desde tabla 'pacientes'
     let pacienteData = null
     let dniPaciente = '-'
-    try {
-      const { data, error } = await supabase
-        .from('pacientes')
-        .select('*')
-        .eq('id', turno.paciente_id)
-        .single()
-      if (!error && data) {
-        pacienteData = data
-        dniPaciente = data.dni || '-'
+    let pacienteIdReal = turno.paciente_id
+
+    // Estrategia 1: buscar por paciente_id (turnos nuevos)
+    if (pacienteIdReal) {
+      try {
+        const { data, error } = await supabase
+          .from('pacientes')
+          .select('*')
+          .eq('id', pacienteIdReal)
+          .single()
+        if (!error && data) {
+          pacienteData = data
+          dniPaciente = data.dni || '-'
+        }
+      } catch (e) {
+        console.error('Error cargando paciente por ID:', e)
       }
-    } catch (e) {
-      console.error('Error cargando paciente para ficha clínica:', e)
+    }
+
+    // Estrategia 2: fallback por nombre + tutor_id (turnos viejos sin paciente_id)
+    if (!pacienteData && turno.paciente_nombre && turno.tutor_id) {
+      try {
+        const { data, error } = await supabase
+          .from('pacientes')
+          .select('*')
+          .ilike('nombre', turno.paciente_nombre.trim())
+          .eq('tutor_id', turno.tutor_id)
+          .limit(1)
+        if (!error && data && data.length > 0) {
+          pacienteData = data[0]
+          pacienteIdReal = data[0].id
+          dniPaciente = data[0].dni || '-'
+          console.log('[DIAG] Paciente encontrado por fallback nombre:', pacienteData.nombre, 'ID:', pacienteIdReal)
+        }
+      } catch (e) {
+        console.error('Error cargando paciente por nombre fallback:', e)
+      }
     }
 
     // Guardar referencia para el update posterior
     window._pacienteFichaData = pacienteData
-    window._pacienteFichaId = turno.paciente_id
+    window._pacienteFichaId = pacienteIdReal
 
     // Título y datos del paciente
     document.getElementById('modal-historial-paciente').textContent = turno?.paciente_nombre || 'Paciente'
@@ -921,8 +971,28 @@
       }
 
       // ── 2. Actualizar ficha clínica del paciente ──
-      const pacienteId = window._pacienteFichaId || turnoAtendiendo.paciente_id
-      console.log('[DIAG] guardarHistorial - pacienteId:', pacienteId, 'turnoAtendiendo.paciente_id:', turnoAtendiendo?.paciente_id)
+      let pacienteId = window._pacienteFichaId || turnoAtendiendo.paciente_id
+      console.log('[DIAG] guardarHistorial - pacienteId inicial:', pacienteId, 'turnoAtendiendo.paciente_id:', turnoAtendiendo?.paciente_id)
+
+      // Fallback: si no hay pacienteId, buscar por nombre + tutor_id
+      if (!pacienteId && turnoAtendiendo?.paciente_nombre && turnoAtendiendo?.tutor_id) {
+        try {
+          const { data, error } = await supabase
+            .from('pacientes')
+            .select('id')
+            .ilike('nombre', turnoAtendiendo.paciente_nombre.trim())
+            .eq('tutor_id', turnoAtendiendo.tutor_id)
+            .limit(1)
+          if (!error && data && data.length > 0) {
+            pacienteId = data[0].id
+            console.log('[DIAG] pacienteId encontrado por fallback nombre:', pacienteId)
+          } else {
+            console.warn('[DIAG] No se encontró paciente por nombre fallback:', turnoAtendiendo.paciente_nombre)
+          }
+        } catch (err) {
+          console.error('[DIAG] Error en fallback nombre:', err)
+        }
+      }
 
       if (pacienteId) {
         const fichaUpdates = {
@@ -948,7 +1018,7 @@
           console.error('[DIAG] Error inesperado actualizando ficha clínica:', err)
         }
       } else {
-        console.warn('[DIAG] No se pudo actualizar ficha: pacienteId es null/undefined')
+        console.warn('[DIAG] No se pudo actualizar ficha: pacienteId es null/undefined y no se encontró fallback')
       }
 
       // ── 3. Marcar turno como finalizado ──
