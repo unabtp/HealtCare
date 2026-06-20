@@ -413,142 +413,81 @@
   let turnosExistentes = []
   let historialClinico = []
 
-  // Lista de doctores - se carga desde tabla 'doctores' Y 'perfiles' en Supabase
+  // Lista de doctores - se carga desde tabla 'doctores' (única fuente de verdad)
   let doctores = []
   let doctoresCargados = false
 
   // UUID del doctor infectólogo que SIEMPRE debe aparecer
-  const DOCTOR_INFECTOLOGO_ID = 'd9cc946e-0baf-4bf8-b355-7afed1cc8f71'
+  // ═══════════════════════════════════════════════════════════════
+  //  CARGAR DOCTORES — Fuente de verdad: tabla 'doctores'
+  //  ═══════════════════════════════════════════════════════════════
+  //  ARQUITECTURA (2026-06-20):
+  //  • TODOS los doctores (logueables y no logueables) viven en
+  //    la tabla 'doctores'. Esta es la ÚNICA fuente de verdad.
+  //  • Los doctores logueables (como el Dr. Pedro) se sincronizan
+  //    automáticamente desde 'perfiles' al iniciar sesión, vía
+  //    dashboard-common.js → syncDoctorToDoctores().
+  //  • El paciente NUNCA lee de 'perfiles' para obtener doctores.
+  //  • Si se agrega un nuevo campo al doctor (foto, bio, etc.),
+  //    solo hay que modificar la tabla 'doctores' y este select.
+  //  ═══════════════════════════════════════════════════════════════
 
   async function cargarDoctores() {
     try {
-      // 1. Cargar doctores de tabla 'doctores' (sin cuenta auth)
+      // SELECT único de la fuente de verdad
       const { data: doctoresData, error: doctoresError } = await supabase
         .from('doctores')
-        .select('id, nombre, apellido, especialidad, dias, horarios, estado')
+        .select('id, nombre, apellido, especialidad, email, telefono, dias, horarios, fechas_disponibles, estado')
         .eq('activo', true)
         .order('nombre', { ascending: true })
 
-      let doctoresTabla = []
-      if (!doctoresError && doctoresData) {
-        doctoresTabla = doctoresData.map(d => {
-          const titulo = d.nombre + ' ' + d.apellido
-          const esMujer = d.nombre.endsWith('a') || d.nombre.endsWith('á') || ['Sofía','Luciana','Allice','Lesly'].includes(d.nombre)
-          return {
-            id: d.id,
-            nombre: (esMujer ? 'Dra. ' : 'Dr. ') + titulo,
-            especialidad: d.especialidad || 'Pediatría General',
-            sexo: esMujer ? 'F' : 'M',
-            avatar: esMujer ? '👩‍⚕️' : '👨‍⚕️',
-            dias: d.dias || [1,2,3,4,5],
-            horarios: d.horarios || ['09:00','10:00','11:00','15:00','16:00'],
-            fechas_disponibles: d.fechas_disponibles || [],
-            fuente: 'doctores'
-          }
-        })
+      if (doctoresError) {
+        console.error('Error cargando doctores:', doctoresError)
+        doctores = []
+        pintarDoctores()
+        return
       }
 
-      // 2. Cargar doctores de tabla 'perfiles' (con cuenta auth, rol = 'doctor')
-      const { data: perfilesData, error: perfilesError } = await supabase
-        .from('perfiles')
-        .select('id, nombre, apellido, especialidad, telefono, estado')
-        .eq('rol', 'doctor')
-        .eq('activo', true)
-        .order('nombre', { ascending: true })
-
-      let doctoresPerfiles = []
-      if (!perfilesError && perfilesData) {
-        doctoresPerfiles = perfilesData.map(d => {
-          const titulo = d.nombre + ' ' + d.apellido
-          const esMujer = d.nombre.endsWith('a') || d.nombre.endsWith('á') || ['Sofía','Luciana','Allice','Lesly'].includes(d.nombre)
-          return {
-            id: d.id,
-            nombre: (esMujer ? 'Dra. ' : 'Dr. ') + titulo,
-            especialidad: d.especialidad || 'Pediatría General',
-            sexo: esMujer ? 'F' : 'M',
-            avatar: esMujer ? '👩‍⚕️' : '👨‍⚕️',
-            dias: [1,2,3,4,5], // Por defecto Lunes a Viernes
-            horarios: ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30'],
-            fechas_disponibles: d.fechas_disponibles || [],
-            fuente: 'perfiles'
-          }
-        })
+      if (!doctoresData || doctoresData.length === 0) {
+        doctores = []
+        pintarDoctores()
+        return
       }
 
-      // 3. Combinar y eliminar duplicados (priorizar perfiles sobre doctores)
-      const doctoresMap = new Map()
+      // Mapear al formato que espera la UI
+      doctores = doctoresData.map(d => {
+        const titulo = (d.nombre || '') + ' ' + (d.apellido || '')
+        const nombreCompleto = (d.nombre || '').trim()
+        // Heurística para determinar sexo por terminación del nombre
+        const esMujer = nombreCompleto.endsWith('a') || 
+                        nombreCompleto.endsWith('á') || 
+                        ['Sofía', 'Luciana', 'Allice', 'Lesly'].includes(nombreCompleto)
 
-      // Primero agregamos los de perfiles
-      doctoresPerfiles.forEach(d => doctoresMap.set(d.id, d))
-
-      // Luego agregamos los de tabla doctores solo si no existe en perfiles
-      doctoresTabla.forEach(d => {
-        if (!doctoresMap.has(d.id)) {
-          doctoresMap.set(d.id, d)
+        return {
+          id: d.id,
+          nombre: (esMujer ? 'Dra. ' : 'Dr. ') + titulo.trim(),
+          especialidad: d.especialidad || 'Pediatría General',
+          sexo: esMujer ? 'F' : 'M',
+          avatar: esMujer ? '👩‍⚕️' : '👨‍⚕️',
+          // 'dias' es legacy (días de semana 0-6). Se mantiene para
+          // compatibilidad hacia atrás con doctores que aún no usen
+          // fechas_disponibles (días específicos del calendario).
+          dias: d.dias || [1, 2, 3, 4, 5],
+          horarios: d.horarios || ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+                                   '15:00', '15:30', '16:00', '16:30'],
+          // fechas_disponibles: array de strings 'YYYY-MM-DD' con los
+          // días específicos que el doctor configuró como disponibles.
+          // Si está vacío o null, el paciente usa 'dias' como fallback.
+          fechas_disponibles: d.fechas_disponibles || []
         }
       })
 
-      // 4. Asegurar que el doctor infectólogo SIEMPRE esté presente
-      if (!doctoresMap.has(DOCTOR_INFECTOLOGO_ID)) {
-        // Buscar en perfiles específicamente
-        const { data: infectData, error: infectError } = await supabase
-          .from('perfiles')
-          .select('id, nombre, apellido, especialidad')
-          .eq('id', DOCTOR_INFECTOLOGO_ID)
-          .single()
-
-        if (!infectError && infectData) {
-          const d = infectData
-          const esMujer = d.nombre.endsWith('a') || d.nombre.endsWith('á') || ['Sofía','Luciana','Allice','Lesly'].includes(d.nombre)
-          doctoresMap.set(DOCTOR_INFECTOLOGO_ID, {
-            id: d.id,
-            nombre: (esMujer ? 'Dra. ' : 'Dr. ') + d.nombre + ' ' + d.apellido,
-            especialidad: 'Infectología Pediátrica',
-            sexo: esMujer ? 'F' : 'M',
-            avatar: esMujer ? '👩‍⚕️' : '👨‍⚕️',
-            dias: [1,2,3,4,5],
-            horarios: ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30'],
-            fechas_disponibles: d.fechas_disponibles || [],
-            fuente: 'perfiles_forzado'
-          })
-        } else {
-          // Fallback: forzar el doctor con datos conocidos si no está en BD
-          doctoresMap.set(DOCTOR_INFECTOLOGO_ID, {
-            id: DOCTOR_INFECTOLOGO_ID,
-            nombre: 'Dr. Pedro Alvarez',
-            especialidad: 'Infectología Pediátrica',
-            sexo: 'M',
-            avatar: '👨‍⚕️',
-            dias: [1,2,3,4,5],
-            horarios: ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30'],
-            fechas_disponibles: [],
-            fuente: 'perfiles_forzado'
-          })
-        }
-      } else {
-        // Si ya existe, asegurar que tenga especialidad de infectología
-        const doc = doctoresMap.get(DOCTOR_INFECTOLOGO_ID)
-        if (doc) {
-          doc.especialidad = 'Infectología Pediátrica'
-        }
-      }
-
-      doctores = Array.from(doctoresMap.values())
       doctoresCargados = true
       pintarDoctores()
+
     } catch (e) {
       console.error('Error inesperado cargando doctores:', e)
-      // Fallback: mostrar solo el doctor infectólogo
-      doctores = [{
-        id: DOCTOR_INFECTOLOGO_ID,
-        nombre: 'Dr. Pedro Alvarez',
-        especialidad: 'Infectología Pediátrica',
-        sexo: 'M',
-        avatar: '👨‍⚕️',
-        dias: [1,2,3,4,5],
-        horarios: ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30'],
-        fuente: 'perfiles_forzado'
-      }]
+      doctores = []
       pintarDoctores()
     }
   }

@@ -1,6 +1,20 @@
 // ═══════════════════════════════════════════════
 //  dashboard-common.js · Lógica compartida dashboards
 //  Single Responsibility: inicialización, navegación, UI común
+//  
+//  ARQUITECTURA DOCTORES/PERFILES (2026-06-20):
+//  ───────────────────────────────────────────────
+//  • 'perfiles'  → Solo datos de AUTENTICACIÓN (id, nombre, apellido, 
+//                  email, telefono, dni, rol, activo, last_sign_in_at)
+//  • 'doctores'  → Fuente de verdad para DATOS MÉDICOS de TODOS los 
+//                  doctores (logueables y no logueables).
+//                  Incluye: especialidad, horarios, fechas_disponibles
+//  
+//  SINCRONIZACIÓN: Al iniciar sesión un doctor (rol='doctor'), se
+//  verifica/crea automáticamente su registro en 'doctores' vía
+//  syncDoctorToDoctores(). Esto garantiza una sola fuente de verdad.
+//  
+//  El paciente lee doctores ÚNICAMENTE de la tabla 'doctores'.
 //  ═══════════════════════════════════════════════
 
 import { supabase } from '/js/supabaseClient.js'
@@ -32,17 +46,120 @@ export async function initDashboard(requiredRole) {
     return null
   }
 
-  // 4. Actualizar last_sign_in_at
+  // 4. SINCRONIZAR DOCTOR CON TABLA 'doctores' (si aplica)
+  //    Esto garantiza que todo doctor logueable exista en la tabla
+  //    'doctores' con sus datos médicos, manteniendo una sola fuente
+  //    de verdad para disponibilidad, horarios, especialidad, etc.
+  if (perfil.rol === 'doctor') {
+    await syncDoctorToDoctores(perfil)
+  }
+
+  // 5. Actualizar last_sign_in_at
   await profileService.update(session.user.id, {
     last_sign_in_at: new Date().toISOString()
   })
 
-  // 5. Setup UI
+  // 6. Setup UI
   setupMobileMenu()
   setupPushNotifications()
   updateHeader(perfil)
 
   return perfil
+}
+
+// ═══════════════════════════════════════════════
+//  SYNC: perfiles → doctores
+//  ═══════════════════════════════════════════════
+//  Cuando un doctor (con cuenta auth) inicia sesión, esta función
+//  garantiza que exista un registro correspondiente en la tabla
+//  'doctores'. Si no existe, lo crea. Si existe, actualiza datos
+//  básicos (nombre, email, teléfono) sin tocar campos médicos.
+//  
+//  PRINCIPIO: 'doctores' es la ÚNICA fuente de verdad para:
+//  • especialidad, horarios, fechas_disponibles, estado
+//  'perfiles' es la ÚNICA fuente de verdad para:
+//  • autenticación, rol, last_sign_in_at
+//  ═══════════════════════════════════════════════
+async function syncDoctorToDoctores(perfil) {
+  if (!perfil || perfil.rol !== 'doctor') return
+
+  try {
+    // Verificar si el doctor ya existe en tabla 'doctores'
+    const { data: existente, error: selectError } = await supabase
+      .from('doctores')
+      .select('id, especialidad, horarios, fechas_disponibles')
+      .eq('id', perfil.id)
+      .single()
+
+    if (selectError && selectError.code !== 'PGRST116') {
+      // PGRST116 = "JSON object requested, multiple (or no) rows returned"
+      // Es el error esperado cuando no hay filas (single() con 0 resultados)
+      console.warn('[syncDoctor] Error consultando doctores:', selectError.message)
+    }
+
+    if (!existente) {
+      // ── CASO A: Doctor NO existe en 'doctores' → CREAR ──
+      console.log('[syncDoctor] Creando registro en doctores para:', perfil.id)
+
+      const { error: insertError } = await supabase
+        .from('doctores')
+        .insert({
+          id: perfil.id,
+          nombre: perfil.nombre || '',
+          apellido: perfil.apellido || '',
+          // Si el perfil tiene especialidad, usarla. Si no, default.
+          // Nota: en la práctica, la especialidad se configura en el
+          // dashboard del doctor y se guarda en 'doctores'.
+          especialidad: perfil.especialidad || 'Pediatría General',
+          email: perfil.email || '',
+          telefono: perfil.telefono || '',
+          activo: true,
+          estado: 'libre',
+          // 'dias' es legacy (días de semana 0-6). Se mantiene para
+          // compatibilidad hacia atrás con doctores que aún no usen
+          // fechas_disponibles (días específicos del calendario).
+          dias: [1, 2, 3, 4, 5],
+          horarios: ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+                     '15:00', '15:30', '16:00', '16:30'],
+          fechas_disponibles: []
+        })
+
+      if (insertError) {
+        console.error('[syncDoctor] Error creando doctor:', insertError.message)
+      } else {
+        console.log('[syncDoctor] Doctor creado exitosamente en tabla doctores')
+      }
+
+    } else {
+      // ── CASO B: Doctor YA existe en 'doctores' → ACTUALIZAR básicos ──
+      // Solo actualizamos datos personales que pueden cambiar en 'perfiles'.
+      // NUNCA tocamos: especialidad, horarios, fechas_disponibles, estado
+      // porque esos son configurados por el doctor en su dashboard.
+      const updates = {}
+      if (perfil.nombre !== undefined) updates.nombre = perfil.nombre
+      if (perfil.apellido !== undefined) updates.apellido = perfil.apellido
+      if (perfil.email !== undefined) updates.email = perfil.email
+      if (perfil.telefono !== undefined) updates.telefono = perfil.telefono
+      updates.activo = true
+
+      // Solo hacer update si hay algo que actualizar
+      if (Object.keys(updates).length > 0) {
+        const { error: updateError } = await supabase
+          .from('doctores')
+          .update(updates)
+          .eq('id', perfil.id)
+
+        if (updateError) {
+          console.warn('[syncDoctor] Error actualizando doctor:', updateError.message)
+        } else {
+          console.log('[syncDoctor] Datos básicos del doctor actualizados')
+        }
+      }
+    }
+  } catch (err) {
+    // El sync NUNCA debe bloquear el login. Si falla, logueamos y seguimos.
+    console.error('[syncDoctor] Error inesperado en sync:', err)
+  }
 }
 
 // ── HEADER ──

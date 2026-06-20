@@ -590,6 +590,26 @@
   import { initDashboard } from '../js/dashboard-common.js'
   import { supabase } from '../js/supabaseClient.js'
 
+  // ═══════════════════════════════════════════════════════════════════
+  //  ARQUITECTURA DOCTOR / PERFILES (2026-06-20)
+  //  ═══════════════════════════════════════════════════════════════════
+  //  Este dashboard lee y escribe en la tabla 'doctores', que es la
+  //  ÚNICA fuente de verdad para datos médicos de TODOS los doctores.
+  //
+  //  El sync con 'perfiles' (auth) se hace automáticamente al iniciar
+  //  sesión vía dashboard-common.js → syncDoctorToDoctores(). Esto
+  //  garantiza que el doctor logueable (Dr. Pedro) exista en 'doctores'
+  //  con su UUID de auth, manteniendo consistencia.
+  //
+  //  Campos que guarda este dashboard en 'doctores':
+  //    • fechas_disponibles (text[]) — días específicos disponibles
+  //    • horarios (text[]) — franjas horarias de atención
+  //    • nombre, apellido, email, telefono (sync desde perfiles)
+  //
+  //  El paciente lee estos mismos datos de 'doctores' para mostrar
+  //  disponibilidad en tiempo real.
+  //  ═══════════════════════════════════════════════════════════════════
+
   let usuarioLogueado = null
   let turnosHoy = []
   let pacientes = []
@@ -694,6 +714,10 @@
     }
   }
 
+  // ═══════════════════════════════════════════
+  //  CARGAR DISPONIBILIDAD desde 'doctores'
+  //  Fuente de verdad: tabla 'doctores' (única)
+  //  ═══════════════════════════════════════════
   async function cargarCalendarioDoctor() {
     if (!usuarioLogueado) return
     try {
@@ -1160,6 +1184,12 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     pintarHorariosEditor()
   }
 
+  // ═══════════════════════════════════════════
+  //  GUARDAR DISPONIBILIDAD en 'doctores'
+  //  Upsert: crea o actualiza el registro del doctor.
+  //  Nota: el id es el UUID de auth (perfiles.id), que coincide
+  //  con doctores.id gracias al sync en dashboard-common.js.
+  //  ═══════════════════════════════════════════
   window.subirCalendario = async function() {
     const diasCount = fechasDisponibles.length
 
