@@ -125,19 +125,19 @@
       background: var(--blanco);
       border: 1px solid var(--borde);
       border-radius: var(--radio-lg);
-      padding: 16px;
+      padding: 12px;
     }
     .cal-mes-header {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       background: var(--verde-claro);
       border-radius: var(--radio-md);
       cursor: pointer;
       transition: all .2s;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       user-select: none;
     }
     .cal-mes-header:hover {
@@ -171,11 +171,11 @@
     .cal-mes-contenido {
       max-height: 0;
       overflow: hidden;
-      transition: max-height .3s ease-out, opacity .3s ease-out;
+      transition: max-height .4s ease-out, opacity .3s ease-out;
       opacity: 0;
     }
     .cal-mes-contenido.abierto {
-      max-height: 600px;
+      max-height: 900px;
       opacity: 1;
     }
     .cal-dias-header {
@@ -195,20 +195,21 @@
     .cal-dias-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
+      gap: 3px;
     }
     .cal-dia-celda {
       aspect-ratio: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 10px;
-      font-size: 14px;
+      border-radius: 8px;
+      font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       transition: all .2s;
       border: 2px solid transparent;
-      min-height: 36px;
+      min-height: 32px;
+      padding: 4px 2px;
     }
     .cal-dia-celda:hover:not(.pasado):not(.vacio) {
       transform: scale(1.05);
