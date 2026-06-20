@@ -891,16 +891,74 @@
   function pintarFichaMedica() {
     const p = pacienteHistorialSeleccionado
     if (!p) return
+
+    // Tipo de sangre: editable UNA SOLA VEZ si está vacío
+    const tieneTipoSangre = p.tipo_sangre && p.tipo_sangre !== 'No especificado' && p.tipo_sangre.trim() !== ''
+    const tipoSangreHtml = tieneTipoSangre
+      ? `<div class="ficha-valor">${p.tipo_sangre}</div>`
+      : `<div class="ficha-valor" style="display:flex; gap:8px; align-items:center;">
+           <input type="text" id="edit-tipo-sangre" placeholder="Ej: A+" style="padding:6px 10px; border:1.5px solid var(--borde); border-radius:8px; font-size:14px; width:100px;">
+           <button class="btn btn-prim btn-sm" onclick="guardarTipoSangreUnaVez()">💾 Guardar</button>
+         </div>
+         <div style="font-size:12px; color:var(--verde); margin-top:4px;">⚠️ Solo podés ingresar esto una vez. Verificá antes de guardar.</div>`
+
     document.getElementById('ficha-medica-grid').innerHTML = `
       <div class="ficha-item"><div class="ficha-label">Nombre y apellido</div><div class="ficha-valor">${p.nombre}</div></div>
       <div class="ficha-item"><div class="ficha-label">DNI</div><div class="ficha-valor">${p.dni}</div></div>
       <div class="ficha-item"><div class="ficha-label">Edad</div><div class="ficha-valor">${p.edad || calcularEdad(p.nacimiento)}</div></div>
       <div class="ficha-item"><div class="ficha-label">Fecha de nacimiento</div><div class="ficha-valor">${p.nacimiento}</div></div>
-      <div class="ficha-item"><div class="ficha-label">Tipo de sangre</div><div class="ficha-valor">${p.tipo_sangre || 'No especificado'}</div></div>
+      <div class="ficha-item"><div class="ficha-label">Tipo de sangre</div>${tipoSangreHtml}</div>
       <div class="ficha-item"><div class="ficha-label">Altura</div><div class="ficha-valor">${p.altura || 'No especificado'}</div></div>
       <div class="ficha-item"><div class="ficha-label">Peso</div><div class="ficha-valor">${p.peso || 'No especificado'}</div></div>
       <div class="ficha-item"><div class="ficha-label">Alergias</div><div class="ficha-valor">${p.alergias || 'Ninguna'}</div></div>
     `
+  }
+
+  // Guardar tipo de sangre UNA SOLA VEZ — con confirmación
+  window.guardarTipoSangreUnaVez = async function() {
+    const p = pacienteHistorialSeleccionado
+    if (!p) return
+
+    const input = document.getElementById('edit-tipo-sangre')
+    const valor = input.value.trim().toUpperCase()
+
+    if (!valor) {
+      mostrarPush('err', 'Campo vacío', 'Ingresá el tipo de sangre antes de guardar.')
+      return
+    }
+
+    // Confirmación antes de guardar (solo una vez)
+    const confirmar = confirm(
+      `¿Estás seguro de que el tipo de sangre es "${valor}"?\n\n` +
+      `⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER.\n` +
+      `Solo podés ingresar el tipo de sangre una única vez.`
+    )
+
+    if (!confirmar) return
+
+    try {
+      const { error } = await supabase
+        .from('pacientes')
+        .update({ tipo_sangre: valor })
+        .eq('id', p.id)
+
+      if (error) {
+        mostrarPush('err', 'Error', 'No se pudo guardar: ' + error.message)
+        return
+      }
+
+      // Actualizar localmente
+      p.tipo_sangre = valor
+      const idx = pacientesRegistrados.findIndex(x => x.id === p.id)
+      if (idx !== -1) pacientesRegistrados[idx].tipo_sangre = valor
+
+      mostrarPush('ok', '¡Guardado!', `El tipo de sangre "${valor}" fue registrado correctamente.`)
+      pintarFichaMedica()
+
+    } catch (e) {
+      console.error('Error guardando tipo de sangre:', e)
+      mostrarPush('err', 'Error', 'Ocurrió un error inesperado.')
+    }
   }
 
   function pintarHistorialClinico() {
@@ -932,49 +990,109 @@
     const p = pacientesRegistrados.find(x => x.id === h.paciente_id)
     if (!h || !p) return
 
-    const contenido = `HEALTHCARE PEDIATRÍA
-Av. Corrientes 1234, Buenos Aires
-Tel: +54 11 4000-0000
+    const edad = p.edad || calcularEdad(p.nacimiento)
+    const fechaActual = new Date().toLocaleDateString('es-AR')
 
-═══════════════════════════════════════
+    // Crear documento HTML para imprimir como PDF
+    const printHtml = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <title>Constancia Médica - ${p.nombre}</title>
+      <style>
+        @page { size: A4; margin: 20mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6; padding: 40px; }
+        .header { text-align: center; border-bottom: 3px solid #1a7a5e; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { color: #1a7a5e; font-size: 28px; margin-bottom: 8px; }
+        .header p { color: #666; font-size: 13px; }
+        .badge { display: inline-block; background: #1a7a5e; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 20px; }
+        .section { margin-bottom: 24px; }
+        .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #1a7a5e; font-weight: 700; margin-bottom: 8px; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; }
+        .section-content { font-size: 14px; color: #444; white-space: pre-wrap; }
+        .datos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .dato { background: #f8f9fa; padding: 12px 16px; border-radius: 8px; }
+        .dato-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .dato-valor { font-size: 15px; font-weight: 600; color: #333; }
+        .firma { margin-top: 50px; text-align: center; }
+        .firma-linea { border-top: 1px solid #333; width: 280px; margin: 0 auto 10px; padding-top: 10px; }
+        .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 15px; }
+        @media print { body { padding: 0; } .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>🏥 HealthCare Pediatría</h1>
+        <p>Av. Corrientes 1234, Buenos Aires · Tel: +54 11 4000-0000</p>
+      </div>
 
-           CONSTANCIA MÉDICA
+      <div style="text-align:center;">
+        <span class="badge">CONSTANCIA MÉDICA</span>
+      </div>
 
-═══════════════════════════════════════
+      <div class="datos-grid">
+        <div class="dato">
+          <div class="dato-label">Paciente</div>
+          <div class="dato-valor">${p.nombre}</div>
+        </div>
+        <div class="dato">
+          <div class="dato-label">DNI</div>
+          <div class="dato-valor">${p.dni}</div>
+        </div>
+        <div class="dato">
+          <div class="dato-label">Edad</div>
+          <div class="dato-valor">${edad}</div>
+        </div>
+        <div class="dato">
+          <div class="dato-label">Fecha de consulta</div>
+          <div class="dato-valor">${h.fecha}</div>
+        </div>
+      </div>
 
-Paciente: ${p.nombre}
-DNI: ${p.dni}
-Edad: ${p.edad || calcularEdad(p.nacimiento)}
+      <div class="dato" style="margin-bottom: 20px;">
+        <div class="dato-label">Profesional</div>
+        <div class="dato-valor">${h.profesional}</div>
+      </div>
 
-Fecha de consulta: ${h.fecha}
-Profesional: ${h.profesional}
+      <div class="section">
+        <div class="section-title">Diagnóstico / Control</div>
+        <div class="section-content">${h.diagnostico || 'No especificado'}</div>
+      </div>
 
-DIAGNÓSTICO:
-${h.diagnostico}
+      <div class="section">
+        <div class="section-title">Tratamiento / Receta</div>
+        <div class="section-content">${h.tratamiento || 'No especificado'}</div>
+      </div>
 
-TRATAMIENTO / RECETA:
-${h.tratamiento}
+      <div class="firma">
+        <div class="firma-linea">${h.profesional}</div>
+        <p style="font-size: 12px; color: #666;">Médico Pediatra · MP: 12345 · MN: 67890</p>
+      </div>
 
-═══════════════════════════════════════
+      <div class="footer">
+        Documento generado el ${fechaActual} · HealthCare Pediatría · 2026<br>
+        Este documento tiene validez como constancia de atención médica.
+      </div>
 
-Firma digital del profesional:
+      <div class="no-print" style="text-align:center; margin-top:30px;">
+        <button onclick="window.print()" style="padding:12px 32px; background:#1a7a5e; color:white; border:none; border-radius:8px; font-size:15px; cursor:pointer;">
+          🖨️ Imprimir / Guardar como PDF
+        </button>
+        <p style="font-size:12px; color:#999; margin-top:10px;">Seleccioná "Guardar como PDF" en el diálogo de impresión</p>
+      </div>
+    </body>
+    </html>`
 
-${h.profesional}
-MP: 12345 · MN: 67890
+    // Abrir en nueva ventana para imprimir/guardar como PDF
+    const printWindow = window.open('', '_blank', 'width=800,height=900')
+    printWindow.document.write(printHtml)
+    printWindow.document.close()
 
-HealthCare Pediatría - 2026`
+    // Auto-focus para que el usuario pueda imprimir inmediatamente
+    printWindow.focus()
 
-    const blob = new Blob([contenido], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `Constancia_${p.nombre.replace(/ /g,'_')}_${h.fecha}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-
-    mostrarPush('ok', 'Constancia descargada', `La constancia médica de ${p.nombre} fue descargada correctamente.`)
+    mostrarPush('ok', 'Constancia generada', `Se abrió la constancia de ${p.nombre}. Usá Ctrl+P (o Cmd+P) para guardar como PDF.`)
   }
 
   // ═══════════════════════════════════════════════

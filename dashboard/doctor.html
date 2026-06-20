@@ -377,23 +377,9 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
           <div class="campo" style="margin: 0;">
-            <label>Edad</label>
-            <div class="input-wrap">
-              <input type="text" id="hfc-edad" placeholder="Ej: 8 años">
-            </div>
-          </div>
-          <div class="campo" style="margin: 0;">
             <label>Altura (cm)</label>
             <div class="input-wrap">
               <input type="text" id="hfc-altura" placeholder="Ej: 120" inputmode="decimal">
-            </div>
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-          <div class="campo" style="margin: 0;">
-            <label>Tipo de sangre</label>
-            <div class="input-wrap">
-              <input type="text" id="hfc-tipo-sangre" placeholder="Ej: A+">
             </div>
           </div>
           <div class="campo" style="margin: 0;">
@@ -872,16 +858,12 @@
 
     // Pre-cargar campos de ficha clínica si existen datos
     if (pacienteData) {
-      document.getElementById('hfc-edad').value = pacienteData.edad || ''
       document.getElementById('hfc-altura').value = pacienteData.altura || ''
-      document.getElementById('hfc-tipo-sangre').value = pacienteData.tipo_sangre || ''
       document.getElementById('hfc-peso').value = pacienteData.peso || ''
       document.getElementById('hfc-alergias').value = pacienteData.alergias || ''
     } else {
       // Limpiar campos si no hay datos previos
-      document.getElementById('hfc-edad').value = ''
       document.getElementById('hfc-altura').value = ''
-      document.getElementById('hfc-tipo-sangre').value = ''
       document.getElementById('hfc-peso').value = ''
       document.getElementById('hfc-alergias').value = ''
     }
@@ -929,9 +911,7 @@
       const pacienteId = window._pacienteFichaId || turnoAtendiendo.paciente_id
       if (pacienteId) {
         const fichaUpdates = {
-          edad: document.getElementById('hfc-edad').value.trim() || null,
           altura: document.getElementById('hfc-altura').value.trim() || null,
-          tipo_sangre: document.getElementById('hfc-tipo-sangre').value.trim() || null,
           peso: document.getElementById('hfc-peso').value.trim() || null,
           alergias: document.getElementById('hfc-alergias').value.trim() || null
         }
@@ -964,14 +944,15 @@
     // Limpiar todos los campos
     document.getElementById('h-diagnostico').value = ''
     document.getElementById('h-tratamiento').value = ''
-    document.getElementById('hfc-edad').value = ''
     document.getElementById('hfc-altura').value = ''
-    document.getElementById('hfc-tipo-sangre').value = ''
     document.getElementById('hfc-peso').value = ''
     document.getElementById('hfc-alergias').value = ''
     window._pacienteFichaData = null
     window._pacienteFichaId = null
 
+    // Recargar pacientes para que aparezca el atendido en "Mis Pacientes"
+    await cargarPacientes()
+    pintarPacientes()
     pintarAgenda()
     actualizarMetricas()
     mostrarPush('ok', '¡Atención finalizada!', 'La ficha clínica fue actualizada, el historial médico guardado y la consulta marcada como completada.')
