@@ -373,8 +373,15 @@
           <button class="btn btn-prim" onclick="cambiarPassword()">Actualizar contraseña</button>
         </div>
 
-        <div style="margin-bottom: 24px; border-top: 1px solid var(--borde); padding-top: 24px">
+                <div style="margin-bottom: 24px; border-top: 1px solid var(--borde); padding-top: 24px">
           <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar email</h4>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Contraseña actual (para confirmar)</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="p-email-pass-actual" placeholder="Contraseña actual">
+            </div>
+          </div>
           <div class="campo" style="margin-bottom: 12px">
             <label>Nuevo email</label>
             <div class="input-wrap">
@@ -1244,17 +1251,16 @@
     document.getElementById('p-pass-actual').value = ''
     document.getElementById('p-pass-nueva').value = ''
   }
-  window.cambiarEmail = async function() {
+    window.cambiarEmail = async function() {
+    const passActual = document.getElementById('p-email-pass-actual').value
     const email = document.getElementById('p-email-nuevo').value.trim()
-    if (!email.includes('@')) {
-      mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
+
+    if (!passActual) {
+      mostrarPush('err', 'Faltan datos', 'Ingresá tu contraseña actual para confirmar.')
       return
     }
-
-    // Pedir contraseña actual para re-autenticación (evita error "recently logged in")
-    const password = prompt('Por seguridad, ingresá tu contraseña actual para confirmar el cambio de email:')
-    if (!password) {
-      mostrarPush('err', 'Cancelado', 'No ingresaste la contraseña. El email no fue cambiado.')
+    if (!email.includes('@')) {
+      mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
       return
     }
 
