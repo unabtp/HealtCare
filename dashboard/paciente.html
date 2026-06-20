@@ -442,6 +442,7 @@
             avatar: esMujer ? '👩‍⚕️' : '👨‍⚕️',
             dias: d.dias || [1,2,3,4,5],
             horarios: d.horarios || ['09:00','10:00','11:00','15:00','16:00'],
+            fechas_disponibles: d.fechas_disponibles || [],
             fuente: 'doctores'
           }
         })
@@ -468,6 +469,7 @@
             avatar: esMujer ? '👩‍⚕️' : '👨‍⚕️',
             dias: [1,2,3,4,5], // Por defecto Lunes a Viernes
             horarios: ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30'],
+            fechas_disponibles: d.fechas_disponibles || [],
             fuente: 'perfiles'
           }
         })
@@ -506,6 +508,7 @@
             avatar: esMujer ? '👩‍⚕️' : '👨‍⚕️',
             dias: [1,2,3,4,5],
             horarios: ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30'],
+            fechas_disponibles: d.fechas_disponibles || [],
             fuente: 'perfiles_forzado'
           })
         } else {
@@ -518,6 +521,7 @@
             avatar: '👨‍⚕️',
             dias: [1,2,3,4,5],
             horarios: ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30'],
+            fechas_disponibles: [],
             fuente: 'perfiles_forzado'
           })
         }
@@ -753,20 +757,37 @@
   function pintarCalendario() {
     const grid = document.getElementById('calendario-grid')
     const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
     const diasSemana = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
     const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
-    // Generar los próximos 60 días, filtrar solo disponibles
+    // Verificar si el doctor tiene fechas_disponibles configuradas
+    const tieneFechasEspecificas = doctorSeleccionado && 
+      doctorSeleccionado.fechas_disponibles && 
+      doctorSeleccionado.fechas_disponibles.length > 0
+
+    // Generar los próximos 90 días
     const diasDisponibles = []
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 90; i++) {
       const fecha = new Date(hoy)
       fecha.setDate(hoy.getDate() + i)
       const diaSem = fecha.getDay()
       const diaNum = fecha.getDate()
       const mesIdx = fecha.getMonth()
-      const fechaStr = `${fecha.getFullYear()}-${String(mesIdx + 1).padStart(2,'0')}-${String(diaNum).padStart(2,'0')}`
+      const anio = fecha.getFullYear()
+      const fechaStr = `${anio}-${String(mesIdx + 1).padStart(2,'0')}-${String(diaNum).padStart(2,'0')}`
 
-      const disponible = doctorSeleccionado && doctorSeleccionado.dias.includes(diaSem)
+      let disponible = false
+
+      if (tieneFechasEspecificas) {
+        // NUEVO: Usar fechas_disponibles (días específicos del mes)
+        disponible = doctorSeleccionado.fechas_disponibles.includes(fechaStr)
+      } else {
+        // FALLBACK: Usar dias de semana (compatibilidad hacia atrás)
+        disponible = doctorSeleccionado && doctorSeleccionado.dias.includes(diaSem)
+      }
+
+      // Verificar si el día ya tiene 3 turnos ocupados
       const ocupado = turnosExistentes.filter(t => t.doctor_id === doctorSeleccionado.id && t.fecha === fechaStr).length >= 3
 
       if (disponible && !ocupado) {
@@ -781,11 +802,11 @@
     }
 
     if (diasDisponibles.length === 0) {
-      grid.innerHTML = '<p style="color:var(--texto-s);font-size:14px;text-align:center;padding:20px">No hay días disponibles para este especialista en los próximos 60 días.</p>'
+      grid.innerHTML = '<p style="color:var(--texto-s);font-size:14px;text-align:center;padding:20px">No hay días disponibles para este especialista en los próximos 90 días.</p>'
       return
     }
 
-    // Agrupar por mes y armar filas de 4 días (2 filas = 8 días visibles por mes)
+    // Agrupar por mes y armar filas de 4 días
     let html = ''
     let mesActual = -1
     let diasDelMes = []

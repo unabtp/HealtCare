@@ -112,43 +112,171 @@
       flex-wrap: wrap;
     }
 
-    /* Días de semana editor */
-    .dias-semana-editor {
+    /* ═══════════════════════════════════════════
+       CALENDARIO MENSUAL - GRID DE DÍAS ESPECÍFICOS
+       ═══════════════════════════════════════════ */
+    .calendario-mensual-wrapper {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      flex-direction: column;
+      gap: 24px;
       margin-bottom: 20px;
     }
-    .dia-semana-editor {
-      flex: 1;
-      min-width: 80px;
-      padding: 14px 10px;
-      border-radius: 12px;
+    .cal-mes-grupo {
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-radius: var(--radio-lg);
+      padding: 16px;
+    }
+    .cal-mes-label {
+      font-family: var(--font-titulo);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--verde);
+      margin-bottom: 12px;
+      text-align: center;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--verde-claro);
+    }
+    .cal-dias-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .cal-dia-header {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--texto-s);
+      text-transform: uppercase;
+      padding: 4px 0;
+    }
+    .cal-dias-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .cal-dia-celda {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      border: 2px solid transparent;
+      min-height: 36px;
+    }
+    .cal-dia-celda:hover:not(.pasado):not(.vacio) {
+      transform: scale(1.05);
+    }
+    /* Día disponible (verde) - por defecto */
+    .cal-dia-celda.disponible {
+      background: var(--verde);
+      color: var(--blanco);
+      border-color: var(--verde);
+    }
+    .cal-dia-celda.disponible:hover {
+      background: var(--verde-oscuro);
+    }
+    /* Día no disponible (gris) */
+    .cal-dia-celda.no-disponible {
+      background: var(--gris-claro);
+      color: var(--texto-s);
+      border-color: var(--borde);
+    }
+    .cal-dia-celda.no-disponible:hover {
+      background: var(--gris);
+      color: var(--blanco);
+    }
+    /* Día pasado - bloqueado */
+    .cal-dia-celda.pasado {
+      background: var(--crema);
+      color: var(--texto-s);
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: var(--borde);
+    }
+    /* Celda vacía (relleno) */
+    .cal-dia-celda.vacio {
+      background: transparent;
+      cursor: default;
+    }
+    /* Día seleccionado/hoy */
+    .cal-dia-celda.hoy {
+      box-shadow: 0 0 0 2px var(--verde-oscuro);
+    }
+    /* Leyenda */
+    .cal-leyenda {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--borde);
+    }
+    .cal-leyenda-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--texto-s);
+    }
+    .cal-leyenda-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 2px solid transparent;
+    }
+    .cal-leyenda-dot.verde {
+      background: var(--verde);
+      border-color: var(--verde);
+    }
+    .cal-leyenda-dot.gris {
+      background: var(--gris-claro);
+      border-color: var(--borde);
+    }
+    .cal-leyenda-dot.pasado {
+      background: var(--crema);
+      border-color: var(--borde);
+      opacity: 0.5;
+    }
+
+    /* Horarios editor (mantener estilos existentes) */
+    .horarios-editor {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .hora-editor {
+      padding: 10px 16px;
+      border-radius: 20px;
       border: 2px solid var(--borde);
       background: var(--blanco);
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
       transition: all .2s;
+      min-width: 70px;
       text-align: center;
     }
-    .dia-semana-editor:hover {
+    .hora-editor:hover {
       border-color: var(--verde-mid);
     }
-    .dia-semana-editor.activo {
+    .hora-editor.activo {
       background: var(--verde);
       color: var(--blanco);
       border-color: var(--verde);
     }
-    .dia-semana-editor .dia-nombre {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .03em;
-      margin-bottom: 4px;
-    }
-    .dia-semana-editor .dia-label {
-      font-size: 11px;
-      opacity: .8;
+    .hora-editor.eliminado {
+      background: var(--gris-claro);
+      color: var(--texto-s);
+      border-color: var(--borde);
+      opacity: 0.6;
     }
   </style>
 </head>
@@ -332,12 +460,18 @@
       <div class="panel-data">
         <h3>📅 Configurar disponibilidad</h3>
         <p style="color: var(--texto-s); font-size: 14px; margin-bottom: 20px">
-          Seleccioná los <strong style="color: var(--verde)">días de la semana</strong> en los que atendés y los <strong style="color: var(--verde)">horarios</strong> disponibles. Los pacientes podrán reservar turnos en esos días y horarios.
+          Seleccioná los <strong style="color: var(--verde)">días específicos</strong> en los que atendés y los <strong style="color: var(--verde)">horarios</strong> disponibles. Los pacientes podrán reservar turnos en esos días y horarios. Los días <strong>verdes</strong> están disponibles, los <strong>grises</strong> no. Los días pasados no se pueden modificar.
         </p>
 
+        <!-- Calendario mensual: 3 meses -->
         <div style="margin-bottom: 20px">
-          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Días de atención</label>
-          <div class="dias-semana-editor" id="dias-semana-editor"></div>
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:12px">Días disponibles (junio, julio, agosto)</label>
+          <div class="calendario-mensual-wrapper" id="calendario-mensual-wrapper"></div>
+          <div class="cal-leyenda">
+            <div class="cal-leyenda-item"><div class="cal-leyenda-dot verde"></div> Disponible</div>
+            <div class="cal-leyenda-item"><div class="cal-leyenda-dot gris"></div> No disponible</div>
+            <div class="cal-leyenda-item"><div class="cal-leyenda-dot pasado"></div> Pasado (bloqueado)</div>
+          </div>
         </div>
 
         <div style="margin-bottom: 20px">
@@ -417,23 +551,22 @@
   let usuarioLogueado = null
   let turnosHoy = []
   let pacientes = []
-  let diasSemanaActivos = [1,2,3,4,5] // Lunes a Viernes por defecto
   let horariosDisponibles = ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30']
   let horariosActivos = [...horariosDisponibles]
   let turnoAtendiendo = null
   let pacienteFichaActual = null
 
-  const DIAS_SEMANA = [
-    { num: 0, nombre: 'Dom', label: 'Domingo' },
-    { num: 1, nombre: 'Lun', label: 'Lunes' },
-    { num: 2, nombre: 'Mar', label: 'Martes' },
-    { num: 3, nombre: 'Mié', label: 'Miércoles' },
-    { num: 4, nombre: 'Jue', label: 'Jueves' },
-    { num: 5, nombre: 'Vie', label: 'Viernes' },
-    { num: 6, nombre: 'Sáb', label: 'Sábado' }
-  ]
+  // ═══════════════════════════════════════════
+  //  NUEVO: FECHAS DISPONIBLES (días específicos)
+  //  ═══════════════════════════════════════════
+  let fechasDisponibles = [] // Array de strings 'YYYY-MM-DD'
 
-  // ── INICIALIZACIÓN ──
+  const DIAS_SEMANA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+
+  // ═══════════════════════════════════════════
+  //  INICIALIZACIÓN
+  //  ═══════════════════════════════════════════
   async function init() {
     const perfil = await initDashboard('doctor')
     if (!perfil) return
@@ -445,7 +578,7 @@
 
     pintarAgenda()
     pintarPacientes()
-    pintarDiasSemana()
+    pintarCalendarioMensual()
     pintarHorariosEditor()
     actualizarMetricas()
 
@@ -458,7 +591,9 @@
   }
   init()
 
-  // ── CARGA DESDE SUPABASE ──
+  // ═══════════════════════════════════════════
+  //  CARGA DESDE SUPABASE
+  //  ═══════════════════════════════════════════
   async function cargarTurnosHoy() {
     if (!usuarioLogueado) return
     const hoy = new Date()
@@ -521,19 +656,25 @@
     try {
       const { data, error } = await supabase
         .from('doctores')
-        .select('dias, horarios')
+        .select('fechas_disponibles, horarios')
         .eq('id', usuarioLogueado.id)
         .single()
       if (!error && data) {
-        if (data.dias && Array.isArray(data.dias) && data.dias.length > 0) {
-          diasSemanaActivos = data.dias
+        // Cargar fechas disponibles (nueva columna)
+        if (data.fechas_disponibles && Array.isArray(data.fechas_disponibles)) {
+          fechasDisponibles = data.fechas_disponibles
+        } else {
+          // Si no hay fechas guardadas, por defecto TODOS los días futuros están disponibles
+          fechasDisponibles = []
         }
+        // Cargar horarios
         if (data.horarios && Array.isArray(data.horarios) && data.horarios.length > 0) {
           horariosActivos = data.horarios
         }
       }
     } catch (e) {
-      console.log('No hay registro previo en tabla doctores para este perfil, usando defaults')
+      console.log('No hay registro previo en tabla doctores, usando defaults')
+      fechasDisponibles = []
     }
   }
 
@@ -553,7 +694,9 @@
     return f.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
-  // ── AGENDA ──
+  // ═══════════════════════════════════════════
+  //  AGENDA
+  //  ═══════════════════════════════════════════
   function pintarAgenda() {
     const tbody = document.getElementById('tabla-doctor-agenda')
     if (!turnosHoy.length) {
@@ -664,7 +807,9 @@
     document.getElementById('metric-pendientes').textContent = turnosHoy.filter(t => t.estado === 'pendiente' || t.estado === 'Confirmado').length
   }
 
-  // ── PACIENTES ──
+  // ═══════════════════════════════════════════
+  //  PACIENTES
+  //  ═══════════════════════════════════════════
   function pintarPacientes() {
     const tbody = document.getElementById('tabla-doctor-pacientes')
     if (!pacientes.length) {
@@ -805,31 +950,98 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     if (e.target === this) cerrarModalFicha()
   })
 
-  // ── DÍAS DE SEMANA EDITOR ──
-  function pintarDiasSemana() {
-    const grid = document.getElementById('dias-semana-editor')
-    grid.innerHTML = DIAS_SEMANA.map(d => {
-      const activo = diasSemanaActivos.includes(d.num)
-      let clase = 'dia-semana-editor'
-      if (activo) clase += ' activo'
-      return `<div class="${clase}" id="dia-sem-${d.num}" onclick="toggleDiaSemana(${d.num})">
-        <div class="dia-nombre">${d.nombre}</div>
-        <div class="dia-label">${activo ? 'Atiendo' : 'No atiendo'}</div>
-      </div>`
-    }).join('')
-  }
+  // ═══════════════════════════════════════════
+  //  CALENDARIO MENSUAL - DÍAS ESPECÍFICOS
+  //  ═══════════════════════════════════════════
+  function pintarCalendarioMensual() {
+    const wrapper = document.getElementById('calendario-mensual-wrapper')
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
 
-  window.toggleDiaSemana = function(num) {
-    if (diasSemanaActivos.includes(num)) {
-      diasSemanaActivos = diasSemanaActivos.filter(d => d !== num)
-    } else {
-      diasSemanaActivos.push(num)
-      diasSemanaActivos.sort((a, b) => a - b)
+    // Generar 3 meses: mes actual + 2 siguientes
+    let html = ''
+    for (let mesOffset = 0; mesOffset < 3; mesOffset++) {
+      const fechaMes = new Date(hoy.getFullYear(), hoy.getMonth() + mesOffset, 1)
+      html += generarMesHTML(fechaMes, hoy)
     }
-    pintarDiasSemana()
+    wrapper.innerHTML = html
   }
 
-  // ── HORARIOS EDITOR ──
+  function generarMesHTML(fechaMes, hoy) {
+    const anio = fechaMes.getFullYear()
+    const mes = fechaMes.getMonth()
+    const nombreMes = MESES[mes] + ' ' + anio
+
+    // Primer día del mes (0=Dom, 1=Lun, ...)
+    const primerDia = new Date(anio, mes, 1).getDay()
+    // Último día del mes
+    const ultimoDia = new Date(anio, mes + 1, 0).getDate()
+
+    // Header de días de semana
+    let headerHtml = DIAS_SEMANA.map(d => `<div class="cal-dia-header">${d}</div>`).join('')
+
+    // Celdas de días
+    let celdasHtml = ''
+
+    // Celdas vacías antes del primer día
+    for (let i = 0; i < primerDia; i++) {
+      celdasHtml += '<div class="cal-dia-celda vacio"></div>'
+    }
+
+    // Días del mes
+    for (let dia = 1; dia <= ultimoDia; dia++) {
+      const fechaCelda = new Date(anio, mes, dia)
+      fechaCelda.setHours(0, 0, 0, 0)
+      const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+
+      let clase = 'cal-dia-celda'
+
+      if (fechaCelda < hoy) {
+        // Día pasado: bloqueado
+        clase += ' pasado'
+        celdasHtml += `<div class="${clase}" title="Día pasado - no editable">${dia}</div>`
+      } else {
+        // Día presente o futuro: toggle disponible/no disponible
+        const estaDisponible = fechasDisponibles.includes(fechaStr)
+        if (estaDisponible) {
+          clase += ' disponible'
+        } else {
+          clase += ' no-disponible'
+        }
+        // Marcar hoy
+        if (fechaCelda.getTime() === hoy.getTime()) {
+          clase += ' hoy'
+        }
+        celdasHtml += `<div class="${clase}" onclick="toggleDiaDisponible('${fechaStr}')" title="${estaDisponible ? 'Disponible' : 'No disponible'} - Click para cambiar">${dia}</div>`
+      }
+    }
+
+    return `
+      <div class="cal-mes-grupo">
+        <div class="cal-mes-label">${nombreMes}</div>
+        <div class="cal-dias-header">${headerHtml}</div>
+        <div class="cal-dias-grid">${celdasHtml}</div>
+      </div>
+    `
+  }
+
+  window.toggleDiaDisponible = function(fechaStr) {
+    const idx = fechasDisponibles.indexOf(fechaStr)
+    if (idx > -1) {
+      // Está disponible → quitarlo (no disponible)
+      fechasDisponibles.splice(idx, 1)
+    } else {
+      // No está disponible → agregarlo (disponible)
+      fechasDisponibles.push(fechaStr)
+      fechasDisponibles.sort()
+    }
+    // Repintar solo el calendario (no todo)
+    pintarCalendarioMensual()
+  }
+
+  // ═══════════════════════════════════════════
+  //  HORARIOS EDITOR
+  //  ═══════════════════════════════════════════
   function pintarHorariosEditor() {
     const grid = document.getElementById('horarios-editor')
     grid.innerHTML = horariosDisponibles.map(h => {
@@ -852,7 +1064,7 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
   }
 
   window.subirCalendario = async function() {
-    const diasCount = diasSemanaActivos.length
+    const diasCount = fechasDisponibles.length
 
     try {
       const { error } = await supabase
@@ -866,7 +1078,7 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
           telefono: usuarioLogueado.telefono,
           activo: true,
           estado: 'libre',
-          dias: diasSemanaActivos,
+          fechas_disponibles: fechasDisponibles,
           horarios: horariosActivos
         }, { onConflict: 'id' })
 
@@ -882,10 +1094,12 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     }
 
     mostrarPush('ok', '¡Calendario actualizado!',
-      `Se guardaron ${diasCount} días de atención y ${horariosActivos.length} horarios.`)
+      `Se guardaron ${diasCount} días disponibles y ${horariosActivos.length} horarios.`)
   }
 
-  // ── PERFIL ──
+  // ═══════════════════════════════════════════
+  //  PERFIL
+  //  ═══════════════════════════════════════════
   window.cambiarPasswordDoctor = async function() {
     const actual = document.getElementById('doc-pass-actual').value
     const nueva = document.getElementById('doc-pass-nueva').value
