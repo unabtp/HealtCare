@@ -111,6 +111,45 @@
       justify-content: center;
       flex-wrap: wrap;
     }
+
+    /* Días de semana editor */
+    .dias-semana-editor {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .dia-semana-editor {
+      flex: 1;
+      min-width: 80px;
+      padding: 14px 10px;
+      border-radius: 12px;
+      border: 2px solid var(--borde);
+      background: var(--blanco);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+    }
+    .dia-semana-editor:hover {
+      border-color: var(--verde-mid);
+    }
+    .dia-semana-editor.activo {
+      background: var(--verde);
+      color: var(--blanco);
+      border-color: var(--verde);
+    }
+    .dia-semana-editor .dia-nombre {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      margin-bottom: 4px;
+    }
+    .dia-semana-editor .dia-label {
+      font-size: 11px;
+      opacity: .8;
+    }
   </style>
 </head>
 <body>
@@ -293,12 +332,12 @@
       <div class="panel-data">
         <h3>📅 Configurar disponibilidad</h3>
         <p style="color: var(--texto-s); font-size: 14px; margin-bottom: 20px">
-          Tocá los días para marcarlos como <strong style="color: var(--verde)">disponibles (verde)</strong> o <strong style="color: #9ca3af">no disponibles (gris)</strong>. Luego seleccioná los horarios que atenderás.
+          Seleccioná los <strong style="color: var(--verde)">días de la semana</strong> en los que atendés y los <strong style="color: var(--verde)">horarios</strong> disponibles. Los pacientes podrán reservar turnos en esos días y horarios.
         </p>
 
         <div style="margin-bottom: 20px">
-          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Junio 2026</label>
-          <div class="calendario-mes" id="calendario-mes"></div>
+          <label style="display:block; font-size:13px; font-weight:500; color:var(--texto-s); margin-bottom:8px">Días de atención</label>
+          <div class="dias-semana-editor" id="dias-semana-editor"></div>
         </div>
 
         <div style="margin-bottom: 20px">
@@ -378,11 +417,21 @@
   let usuarioLogueado = null
   let turnosHoy = []
   let pacientes = []
-  let diasDisponibles = {}
+  let diasSemanaActivos = [1,2,3,4,5] // Lunes a Viernes por defecto
   let horariosDisponibles = ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30']
   let horariosActivos = [...horariosDisponibles]
   let turnoAtendiendo = null
   let pacienteFichaActual = null
+
+  const DIAS_SEMANA = [
+    { num: 0, nombre: 'Dom', label: 'Domingo' },
+    { num: 1, nombre: 'Lun', label: 'Lunes' },
+    { num: 2, nombre: 'Mar', label: 'Martes' },
+    { num: 3, nombre: 'Mié', label: 'Miércoles' },
+    { num: 4, nombre: 'Jue', label: 'Jueves' },
+    { num: 5, nombre: 'Vie', label: 'Viernes' },
+    { num: 6, nombre: 'Sáb', label: 'Sábado' }
+  ]
 
   // ── INICIALIZACIÓN ──
   async function init() {
@@ -396,7 +445,7 @@
 
     pintarAgenda()
     pintarPacientes()
-    pintarCalendarioEditor()
+    pintarDiasSemana()
     pintarHorariosEditor()
     actualizarMetricas()
 
@@ -413,7 +462,7 @@
   async function cargarTurnosHoy() {
     if (!usuarioLogueado) return
     const hoy = new Date()
-    const fechaStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`
+    const fechaStr = hoy.toISOString().split('T')[0]
     try {
       const { data, error } = await supabase
         .from('turnos')
@@ -436,7 +485,6 @@
   async function cargarPacientes() {
     if (!usuarioLogueado) return
     try {
-      // Obtener pacientes únicos que tienen turnos con este doctor
       const { data: turnosData, error: turnosErr } = await supabase
         .from('turnos')
         .select('paciente_id, paciente_nombre')
@@ -447,14 +495,12 @@
         return
       }
 
-      // Obtener IDs únicos de pacientes
       const pacienteIds = [...new Set(turnosData.map(t => t.paciente_id).filter(Boolean))]
       if (pacienteIds.length === 0) {
         pacientes = []
         return
       }
 
-      // Cargar datos de pacientes
       const { data, error } = await supabase
         .from('pacientes')
         .select('*')
@@ -479,16 +525,15 @@
         .eq('id', usuarioLogueado.id)
         .single()
       if (!error && data) {
-        if (data.dias) {
-          // dias viene como array de la tabla doctores
-          // No aplicamos directamente, el calendario editor usa el estado local
+        if (data.dias && Array.isArray(data.dias) && data.dias.length > 0) {
+          diasSemanaActivos = data.dias
         }
-        if (data.horarios) {
+        if (data.horarios && Array.isArray(data.horarios) && data.horarios.length > 0) {
           horariosActivos = data.horarios
         }
       }
     } catch (e) {
-      console.log('No hay registro en tabla doctores para este perfil')
+      console.log('No hay registro previo en tabla doctores para este perfil, usando defaults')
     }
   }
 
@@ -578,7 +623,6 @@
       return
     }
 
-    // Guardar en historial_clinico
     if (turnoAtendiendo) {
       try {
         const { error } = await supabase
@@ -596,7 +640,6 @@
         console.error('Error inesperado guardando historial:', err)
       }
 
-      // Actualizar estado del turno
       try {
         await supabase.from('turnos').update({ estado: 'finalizado' }).eq('id', turnoAtendiendo.id)
       } catch (err) {
@@ -630,7 +673,6 @@
     }
     tbody.innerHTML = pacientes.map(p => {
       const edad = p.edad || calcularEdad(p.nacimiento)
-      // Buscar última visita en turnos
       const ultimaVisita = '-'
       return `
       <tr>
@@ -648,7 +690,6 @@
     if (!p) return
     pacienteFichaActual = p
 
-    // Buscar última visita
     let ultimaVisita = '-'
     try {
       const { data, error } = await supabase
@@ -707,7 +748,6 @@
         return
       }
 
-      // Actualizar local
       const idx = pacientes.findIndex(p => p.id === pacienteFichaActual.id)
       if (idx !== -1) {
         pacientes[idx] = { ...pacientes[idx], ...updates }
@@ -761,49 +801,32 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     mostrarPush('ok', 'Ficha descargada', `La ficha de ${p.nombre} fue descargada correctamente.`)
   }
 
-  // Cerrar modal al hacer click fuera
   document.getElementById('modal-ficha-paciente').addEventListener('click', function(e) {
     if (e.target === this) cerrarModalFicha()
   })
 
-  // ── CALENDARIO EDITOR ──
-  function pintarCalendarioEditor() {
-    const grid = document.getElementById('calendario-mes')
-    const diasSem = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
-    let html = diasSem.map(d => `<div class="cal-header">${d}</div>`).join('')
-
-    const hoy = new Date()
-    const primerDia = new Date(2026, 5, 1)
-    const diaInicio = primerDia.getDay()
-
-    for (let i = 0; i < diaInicio; i++) html += '<div></div>'
-
-    for (let d = 1; d <= 30; d++) {
-      const fecha = new Date(2026, 5, d)
-      const esPasado = fecha < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
-      const fechaStr = `2026-06-${String(d).padStart(2,'0')}`
-      const estado = diasDisponibles[fechaStr] || (esPasado ? 'pasado' : 'disponible')
-
-      let clase = 'cal-dia-editor'
-      if (estado === 'disponible') clase += ' disponible'
-      else if (estado === 'ocupado') clase += ' ocupado'
-      else if (estado === 'pasado') clase += ' pasado'
-
-      const estadoTexto = estado === 'disponible' ? 'Disponible' : estado === 'ocupado' ? 'No disp.' : ''
-
-      html += `<div class="${clase}" id="dia-ed-${fechaStr}" onclick="toggleDia('${fechaStr}', ${!esPasado})">
-        <div class="cal-num">${d}</div>
-        <div class="cal-estado">${estadoTexto}</div>
+  // ── DÍAS DE SEMANA EDITOR ──
+  function pintarDiasSemana() {
+    const grid = document.getElementById('dias-semana-editor')
+    grid.innerHTML = DIAS_SEMANA.map(d => {
+      const activo = diasSemanaActivos.includes(d.num)
+      let clase = 'dia-semana-editor'
+      if (activo) clase += ' activo'
+      return `<div class="${clase}" id="dia-sem-${d.num}" onclick="toggleDiaSemana(${d.num})">
+        <div class="dia-nombre">${d.nombre}</div>
+        <div class="dia-label">${activo ? 'Atiendo' : 'No atiendo'}</div>
       </div>`
-    }
-    grid.innerHTML = html
+    }).join('')
   }
 
-  window.toggleDia = function(fecha, editable) {
-    if (!editable) return
-    const actual = diasDisponibles[fecha] || 'disponible'
-    diasDisponibles[fecha] = actual === 'disponible' ? 'ocupado' : 'disponible'
-    pintarCalendarioEditor()
+  window.toggleDiaSemana = function(num) {
+    if (diasSemanaActivos.includes(num)) {
+      diasSemanaActivos = diasSemanaActivos.filter(d => d !== num)
+    } else {
+      diasSemanaActivos.push(num)
+      diasSemanaActivos.sort((a, b) => a - b)
+    }
+    pintarDiasSemana()
   }
 
   // ── HORARIOS EDITOR ──
@@ -829,18 +852,9 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
   }
 
   window.subirCalendario = async function() {
-    const diasDisp = Object.entries(diasDisponibles).filter(([k,v]) => v === 'disponible').length
+    const diasCount = diasSemanaActivos.length
 
-    // Guardar en tabla doctores (upsert)
     try {
-      const diasArray = Object.entries(diasDisponibles)
-        .filter(([k,v]) => v === 'disponible')
-        .map(([k]) => {
-          const d = new Date(k)
-          return d.getDay()
-        })
-      const diasUnicos = [...new Set(diasArray)]
-
       const { error } = await supabase
         .from('doctores')
         .upsert({
@@ -852,7 +866,7 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
           telefono: usuarioLogueado.telefono,
           activo: true,
           estado: 'libre',
-          dias: diasUnicos.length ? diasUnicos : [1,2,3,4,5],
+          dias: diasSemanaActivos,
           horarios: horariosActivos
         }, { onConflict: 'id' })
 
@@ -863,10 +877,12 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
       }
     } catch (e) {
       console.error('Error inesperado guardando calendario:', e)
+      mostrarPush('err', 'Error', 'Error inesperado al guardar el calendario.')
+      return
     }
 
     mostrarPush('ok', '¡Calendario actualizado!',
-      `Se guardaron ${diasDisp} días disponibles y ${horariosActivos.length} horarios de atención.`)
+      `Se guardaron ${diasCount} días de atención y ${horariosActivos.length} horarios.`)
   }
 
   // ── PERFIL ──
@@ -878,7 +894,6 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
       return
     }
 
-    // Re-autenticar con contraseña actual
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: usuarioLogueado.email,
       password: actual
@@ -911,7 +926,6 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
       return
     }
 
-    // Re-autenticar con contraseña actual
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: usuarioLogueado.email,
       password: passActual
@@ -921,14 +935,12 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
       return
     }
 
-    // Actualizar email en auth.users
     const { error: updateError } = await supabase.auth.updateUser({ email: email })
     if (updateError) {
       mostrarPush('err', 'Error', 'No se pudo actualizar el email: ' + updateError.message)
       return
     }
 
-    // Actualizar email en tabla perfiles
     const { error: perfilError } = await supabase
       .from('perfiles')
       .update({ email: email })
@@ -944,20 +956,32 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
   }
 
   window.cambiarTelefonoDoctor = async function() {
-    const tel = document.getElementById('doc-telefono').value
+    const tel = document.getElementById('doc-telefono').value.trim()
     if (!tel) {
       mostrarPush('err', 'Teléfono vacío', 'Ingresá un número de teléfono.')
       return
     }
     const telLimpio = tel.replace(/[^\d]/g, '')
-    const { error } = await supabase
+    if (telLimpio.length < 8) {
+      mostrarPush('err', 'Teléfono inválido', 'El teléfono debe tener al menos 8 dígitos.')
+      return
+    }
+
+    console.log('Actualizando teléfono para usuario:', usuarioLogueado.id, 'teléfono:', telLimpio)
+
+    const { data, error } = await supabase
       .from('perfiles')
       .update({ telefono: telLimpio })
       .eq('id', usuarioLogueado.id)
+      .select()
+
     if (error) {
+      console.error('Error actualizando teléfono:', error)
       mostrarPush('err', 'Error', 'No se pudo actualizar el teléfono: ' + error.message)
       return
     }
+
+    console.log('Teléfono actualizado:', data)
     mostrarPush('ok', 'Teléfono actualizado', `Tu teléfono fue cambiado a ${tel}.`)
     document.getElementById('doc-telefono').value = ''
   }
