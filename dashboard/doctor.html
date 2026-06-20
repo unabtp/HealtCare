@@ -470,10 +470,7 @@
       </div>
 
       <div class="panel-data">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px">
-          <h3 style="margin:0">📋 Pacientes citados para hoy</h3>
-          <button class="btn btn-sec btn-sm" onclick="refrescarAgenda()">🔄 Refrescar</button>
-        </div>
+        <h3>📋 Pacientes citados para hoy</h3>
         <div class="table-container" id="agenda-table-container">
           <table class="tabla-hc">
             <thead>
@@ -643,38 +640,91 @@
   async function cargarTurnosHoy() {
     if (!usuarioLogueado) return
 
-    // FIX: Usar fecha local en formato YYYY-MM-DD sin timezone issues
     const hoy = new Date()
     const anio = hoy.getFullYear()
     const mes = String(hoy.getMonth() + 1).padStart(2, '0')
     const dia = String(hoy.getDate()).padStart(2, '0')
     const fechaStr = `${anio}-${mes}-${dia}`
 
-    console.log('[DEBUG] Buscando turnos para:', fechaStr, 'doctor_id:', usuarioLogueado.id)
+    console.log('[DEBUG] === CARGAR TURNOS HOY ===')
+    console.log('[DEBUG] doctor_id:', usuarioLogueado.id)
+    console.log('[DEBUG] fechaStr:', fechaStr)
+    console.log('[DEBUG] tipo de doctor_id:', typeof usuarioLogueado.id)
 
+    // PRUEBA 1: Query original
     try {
-      const { data, error } = await supabase
+      const { data: data1, error: error1 } = await supabase
         .from('turnos')
         .select('*')
         .eq('doctor_id', usuarioLogueado.id)
         .eq('fecha', fechaStr)
         .order('hora', { ascending: true })
 
-      console.log('[DEBUG] Resultado:', { error, data_count: data ? data.length : 0, data })
+      console.log('[DEBUG] Prueba 1 (original):', { error: error1, count: data1 ? data1.length : 0 })
 
-      if (!error && data) {
-        turnosHoy = data.map(t => ({
-          ...t,
-          estado: t.estado || 'pendiente'
-        }))
-      } else if (error) {
-        console.error('[DEBUG] Error en query:', error)
-        turnosHoy = []
+      if (!error1 && data1 && data1.length > 0) {
+        turnosHoy = data1.map(t => ({ ...t, estado: t.estado || 'pendiente' }))
+        console.log('[DEBUG] ✓ Prueba 1 funcionó')
+        return
       }
     } catch (e) {
-      console.error('Error cargando turnos:', e)
-      turnosHoy = []
+      console.error('[DEBUG] Error prueba 1:', e)
     }
+
+    // PRUEBA 2: Sin filtro de fecha (para ver si encuentra algo)
+    try {
+      const { data: data2, error: error2 } = await supabase
+        .from('turnos')
+        .select('*')
+        .eq('doctor_id', usuarioLogueado.id)
+        .order('hora', { ascending: true })
+
+      console.log('[DEBUG] Prueba 2 (sin fecha):', { error: error2, count: data2 ? data2.length : 0 })
+
+      if (!error2 && data2 && data2.length > 0) {
+        console.log('[DEBUG] Turnos sin filtro de fecha:', data2.map(t => ({ fecha: t.fecha, hora: t.hora, paciente: t.paciente_nombre })))
+      }
+    } catch (e) {
+      console.error('[DEBUG] Error prueba 2:', e)
+    }
+
+    // PRUEBA 3: Usar rango de fecha (gte/lte)
+    try {
+      const { data: data3, error: error3 } = await supabase
+        .from('turnos')
+        .select('*')
+        .eq('doctor_id', usuarioLogueado.id)
+        .gte('fecha', fechaStr)
+        .lte('fecha', fechaStr)
+        .order('hora', { ascending: true })
+
+      console.log('[DEBUG] Prueba 3 (rango):', { error: error3, count: data3 ? data3.length : 0 })
+
+      if (!error3 && data3 && data3.length > 0) {
+        turnosHoy = data3.map(t => ({ ...t, estado: t.estado || 'pendiente' }))
+        console.log('[DEBUG] ✓ Prueba 3 funcionó')
+        return
+      }
+    } catch (e) {
+      console.error('[DEBUG] Error prueba 3:', e)
+    }
+
+    // PRUEBA 4: Query sin filtro de doctor_id (para ver si hay RLS)
+    try {
+      const { data: data4, error: error4 } = await supabase
+        .from('turnos')
+        .select('*')
+        .eq('fecha', fechaStr)
+        .order('hora', { ascending: true })
+
+      console.log('[DEBUG] Prueba 4 (sin doctor_id):', { error: error4, count: data4 ? data4.length : 0 })
+    } catch (e) {
+      console.error('[DEBUG] Error prueba 4:', e)
+    }
+
+    // Si nada funcionó, dejar vacío
+    console.log('[DEBUG] ✗ Ninguna prueba encontró turnos')
+    turnosHoy = []
   }
 
   async function cargarPacientes() {
@@ -757,17 +807,7 @@
   // ═══════════════════════════════════════════
   //  AGENDA
   //  ═══════════════════════════════════════════
-  window.refrescarAgenda = async function() {
-    console.log('[DEBUG] Refrescando agenda...')
-    await cargarTurnosHoy()
-    await cargarPacientes()
-    pintarAgenda()
-    pintarPacientes()
-    actualizarMetricas()
-    mostrarPush('ok', 'Agenda actualizada', 'Los turnos fueron recargados.')
-  }
-
-function pintarAgenda() {
+  function pintarAgenda() {
     const tbody = document.getElementById('tabla-doctor-agenda')
     if (!turnosHoy.length) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--texto-s)">No hay turnos para hoy.</td></tr>'
