@@ -726,13 +726,17 @@
         disponible = doctorSeleccionado && doctorSeleccionado.dias.includes(diaSem)
       }
 
-      // Verificar si el día ya tiene 3 turnos ocupados (solo contar activos: pendiente/Confirmado/atendiendo)
-      const ocupado = turnosExistentes.filter(t => 
+      // Verificar si el día está completo.
+      // Un horario está consumido si tiene turno activo (pendiente/Confirmado/atendiendo)
+      // o turno finalizado. Solo los cancelados devuelven el slot.
+      const turnosConsumidosDelDia = turnosExistentes.filter(t => 
         t.doctor_id === doctorSeleccionado.id && 
         t.fecha === fechaStr &&
-        t.estado !== 'finalizado' &&
         t.estado !== 'cancelado'
-      ).length >= 3
+      )
+      // El límite es la cantidad de horarios que el doctor configuró para ese día
+      const horariosDelDia = doctorSeleccionado.horarios.length
+      const ocupado = turnosConsumidosDelDia.length >= horariosDelDia
 
       if (disponible && !ocupado) {
         diasDisponibles.push({
@@ -810,7 +814,14 @@
   function pintarHorarios() {
     const grid = document.getElementById('horarios-grid')
     if (!doctorSeleccionado) return
-    const ocupados = turnosExistentes.filter(t => t.doctor_id === doctorSeleccionado.id && t.fecha === diaSeleccionado).map(t => t.hora)
+    // Un horario está ocupado si tiene un turno activo o finalizado.
+    // Solo los turnos CANCELADOS liberan el horario (el paciente no va, otro puede ocuparlo).
+    // Los turnos FINALIZADOS mantienen el horario ocupado porque ya fue atendido.
+    const ocupados = turnosExistentes.filter(t => 
+      t.doctor_id === doctorSeleccionado.id && 
+      t.fecha === diaSeleccionado &&
+      t.estado !== 'cancelado'
+    ).map(t => t.hora)
 
     grid.innerHTML = doctorSeleccionado.horarios.map(h => {
       const ocupado = ocupados.includes(h)
