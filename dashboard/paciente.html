@@ -726,8 +726,13 @@
         disponible = doctorSeleccionado && doctorSeleccionado.dias.includes(diaSem)
       }
 
-      // Verificar si el día ya tiene 3 turnos ocupados
-      const ocupado = turnosExistentes.filter(t => t.doctor_id === doctorSeleccionado.id && t.fecha === fechaStr).length >= 3
+      // Verificar si el día ya tiene 3 turnos ocupados (solo contar activos: pendiente/Confirmado/atendiendo)
+      const ocupado = turnosExistentes.filter(t => 
+        t.doctor_id === doctorSeleccionado.id && 
+        t.fecha === fechaStr &&
+        t.estado !== 'finalizado' &&
+        t.estado !== 'cancelado'
+      ).length >= 3
 
       if (disponible && !ocupado) {
         diasDisponibles.push({
@@ -1025,16 +1030,20 @@ HealthCare Pediatría - 2026`
       return
     }
 
-    tbody.innerHTML = filtrados.map(t => `
+    tbody.innerHTML = filtrados.map(t => {
+      const acciones = t.estado === 'finalizado' 
+        ? '<span style="color:var(--texto-s); font-size:13px">Completado</span>'
+        : `<button class="btn btn-peligro btn-sm" onclick="cancelarTurno('${t.id}')">Cancelar</button>`
+      return `
       <tr>
         <td data-label="Paciente"><strong>${t.paciente_nombre}</strong></td>
         <td data-label="Especialista">${t.doctor_nombre}</td>
         <td data-label="Fecha">${t.fecha}</td>
         <td data-label="Hora">${t.hora} hs</td>
         <td data-label="Estado"><span style="color:var(--ok)">● ${t.estado}</span></td>
-        <td data-label="Acciones"><button class="btn btn-peligro btn-sm" onclick="cancelarTurno('${t.id}')">Cancelar</button></td>
+        <td data-label="Acciones">${acciones}</td>
       </tr>
-    `).join('')
+    `}).join('')
   }
   window.cancelarTurno = function(id) {
     mostrarPush('warn', 'Cancelar turno', '¿Estás seguro de que querés cancelar este turno?', `
