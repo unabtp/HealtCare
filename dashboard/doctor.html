@@ -601,6 +601,7 @@
   //  NUEVO: FECHAS DISPONIBLES (días específicos)
   //  ═══════════════════════════════════════════
   let fechasDisponibles = [] // Array de strings 'YYYY-MM-DD'
+  let mesAbiertoId = 'mes-0' // Trackear qué mes está abierto (por defecto el primero)
 
   const DIAS_SEMANA = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
@@ -1006,6 +1007,19 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
       html += generarMesHTML(fechaMes, hoy, mesOffset)
     }
     wrapper.innerHTML = html
+
+    // Restaurar el mes abierto después de repintar
+    if (mesAbiertoId) {
+      const grupo = document.getElementById(mesAbiertoId)
+      if (grupo) {
+        const header = grupo.querySelector('.cal-mes-header')
+        const contenido = grupo.querySelector('.cal-mes-contenido')
+        if (header && contenido) {
+          contenido.classList.add('abierto')
+          header.classList.add('activo')
+        }
+      }
+    }
   }
 
   window.toggleMes = function(mesId) {
@@ -1022,6 +1036,10 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     if (!estaAbierto) {
       contenido.classList.add('abierto')
       header.classList.add('activo')
+      mesAbiertoId = mesId
+    } else {
+      // Si se cerró, no hay mes abierto
+      mesAbiertoId = null
     }
   }
 
@@ -1030,8 +1048,8 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     const mes = fechaMes.getMonth()
     const nombreMes = MESES[mes] + ' ' + anio
     const mesId = `mes-${mesIndex}`
-    const estaAbierto = mesIndex === 0 ? 'abierto' : '' // Primer mes abierto por defecto
-    const headerActivo = mesIndex === 0 ? 'activo' : ''
+    const estaAbierto = mesId === mesAbiertoId ? 'abierto' : ''
+    const headerActivo = mesId === mesAbiertoId ? 'activo' : ''
 
     // Primer día del mes (0=Dom, 1=Lun, ...)
     const primerDia = new Date(anio, mes, 1).getDay()
@@ -1101,8 +1119,20 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
       fechasDisponibles.push(fechaStr)
       fechasDisponibles.sort()
     }
-    // Repintar solo el calendario (no todo)
+    // Repintar el calendario manteniendo el mes abierto
     pintarCalendarioMensual()
+    // Restaurar el mes que estaba abierto
+    if (mesAbiertoId) {
+      const grupo = document.getElementById(mesAbiertoId)
+      if (grupo) {
+        const header = grupo.querySelector('.cal-mes-header')
+        const contenido = grupo.querySelector('.cal-mes-contenido')
+        if (header && contenido) {
+          contenido.classList.add('abierto')
+          header.classList.add('activo')
+        }
+      }
+    }
   }
 
   // ═══════════════════════════════════════════
