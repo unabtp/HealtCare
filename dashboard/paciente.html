@@ -1263,36 +1263,56 @@
       mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
       return
     }
-
-    // 1. Re-autenticar con contraseña actual
+  
+    // Verificar contraseña actual
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: usuarioLogueado.email,
-      password: passActual   // ← la variable que leíste del input
+      password: passActual
     })
     if (authError) {
       mostrarPush('err', 'Contraseña incorrecta', 'La contraseña ingresada no es válida.')
       return
     }
 
-    // 2. Actualizar email en auth.users (ahora con sesión fresca)
-    const { error: updateError } = await supabase.auth.updateUser({ email: email })
-    if (updateError) {
-      mostrarPush('err', 'Error', 'No se pudo actualizar el email: ' + updateError.message)
-      return
-    }
+    // Llamar a la Edge Function para autoconfirmar
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const response = await fetch(
+        'https://zayvsijksoolbksaybjl.supabase.co/functions/v1/update-email-autoconfirm',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            userId: usuarioLogueado.id,
+            newEmail: email
+          })
+        }
+      )
 
-    // 3. Actualizar email en tabla perfiles
-    const { error: perfilError } = await supabase
-      .from('perfiles')
-      .update({ email: email })
-      .eq('id', usuarioLogueado.id)
-    if (perfilError) {
-      console.error('Error actualizando perfiles:', perfilError)
-    }
+      const result = await response.json()
 
-    mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}. Revisá tu bandeja de entrada para confirmar.`)
-    document.getElementById('p-email-nuevo').value = ''
+      if (!response.ok || result.error) {
+        mostrarPush('err', 'Error', result.error || 'No se pudo actualizar el email.')
+        return
+      }
+
+      // Actualizar localmente
+      usuarioLogueado.email = email
+      mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}.`)
+      document.getElementById('p-email-pass-actual').value = ''
+      document.getElementById('p-email-nuevo').value = ''
+
+    } catch (err) {
+      console.error('Error:', err)
+      mostrarPush('err', 'Error', 'Ocurrió un error inesperado.')
+    }
   }
+
+    
   window.cambiarTelefono = async function() {
     const tel = document.getElementById('p-telefono').value
     if (!tel) {
