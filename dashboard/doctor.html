@@ -701,10 +701,15 @@
   async function cargarPacientes() {
     if (!usuarioLogueado) return
     try {
+      console.log('[DIAG] cargarPacientes() iniciando... doctor_id:', usuarioLogueado.id)
+
       const { data: turnosData, error: turnosErr } = await supabase
         .from('turnos')
         .select('paciente_id, paciente_nombre')
         .eq('doctor_id', usuarioLogueado.id)
+
+      console.log('[DIAG] turnosData:', turnosData, 'error:', turnosErr)
+
       if (turnosErr) {
         console.error('Error cargando turnos para pacientes:', turnosErr)
         pacientes = []
@@ -712,7 +717,10 @@
       }
 
       const pacienteIds = [...new Set(turnosData.map(t => t.paciente_id).filter(Boolean))]
+      console.log('[DIAG] pacienteIds únicos:', pacienteIds)
+
       if (pacienteIds.length === 0) {
+        console.log('[DIAG] No hay pacienteIds, pacientes = []')
         pacientes = []
         return
       }
@@ -721,9 +729,14 @@
         .from('pacientes')
         .select('*')
         .in('id', pacienteIds)
+
+      console.log('[DIAG] pacientes data:', data, 'error:', error)
+
       if (!error && data) {
         pacientes = data
+        console.log('[DIAG] pacientes cargados:', pacientes.length)
       } else {
+        console.error('[DIAG] Error select pacientes:', error)
         pacientes = []
       }
     } catch (e) {
@@ -909,26 +922,33 @@
 
       // ── 2. Actualizar ficha clínica del paciente ──
       const pacienteId = window._pacienteFichaId || turnoAtendiendo.paciente_id
+      console.log('[DIAG] guardarHistorial - pacienteId:', pacienteId, 'turnoAtendiendo.paciente_id:', turnoAtendiendo?.paciente_id)
+
       if (pacienteId) {
         const fichaUpdates = {
           altura: document.getElementById('hfc-altura').value.trim() || null,
           peso: document.getElementById('hfc-peso').value.trim() || null,
           alergias: document.getElementById('hfc-alergias').value.trim() || null
         }
+        console.log('[DIAG] fichaUpdates:', fichaUpdates)
 
         try {
-          const { error: fichaError } = await supabase
+          const { data: updateData, error: fichaError } = await supabase
             .from('pacientes')
             .update(fichaUpdates)
             .eq('id', pacienteId)
+            .select()
+
           if (fichaError) {
-            console.error('Error actualizando ficha clínica:', fichaError)
+            console.error('[DIAG] Error actualizando ficha clínica:', fichaError)
           } else {
-            console.log('Ficha clínica actualizada para paciente:', pacienteId)
+            console.log('[DIAG] Ficha clínica actualizada. Data:', updateData)
           }
         } catch (err) {
-          console.error('Error inesperado actualizando ficha clínica:', err)
+          console.error('[DIAG] Error inesperado actualizando ficha clínica:', err)
         }
+      } else {
+        console.warn('[DIAG] No se pudo actualizar ficha: pacienteId es null/undefined')
       }
 
       // ── 3. Marcar turno como finalizado ──
