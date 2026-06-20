@@ -12,6 +12,106 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/responsive.css">
+  <style>
+    /* Modal de ficha del paciente */
+    .modal-ficha-paciente {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--content-pad);
+      backdrop-filter: blur(6px);
+    }
+    .modal-ficha-paciente.activo { display: flex; }
+    .modal-ficha-paciente .modal-box {
+      background: var(--blanco);
+      border-radius: var(--radio-xl);
+      padding: 28px;
+      max-width: 560px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,.15);
+    }
+    .modal-ficha-paciente h3 {
+      font-family: var(--font-titulo);
+      font-size: 22px;
+      margin-bottom: 8px;
+      color: var(--texto);
+    }
+    .modal-ficha-paciente .modal-sub {
+      font-size: 14px;
+      color: var(--texto-s);
+      margin-bottom: 20px;
+    }
+    .ficha-editable-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (min-width: 769px) {
+      .ficha-editable-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .ficha-editable-item {
+      background: var(--crema);
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .ficha-editable-item .ficha-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--texto-s);
+      margin-bottom: 6px;
+    }
+    .ficha-editable-item input,
+    .ficha-editable-item textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--borde);
+      border-radius: var(--radio-md);
+      font-family: var(--font-cuerpo);
+      font-size: 15px;
+      color: var(--texto);
+      background: var(--blanco);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .ficha-editable-item input:focus,
+    .ficha-editable-item textarea:focus {
+      border-color: var(--verde);
+      box-shadow: 0 0 0 3px rgba(26,122,94,.1);
+    }
+    .ficha-editable-item textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .ficha-editable-item.full-width {
+      grid-column: 1 / -1;
+    }
+    .ficha-ultima-visita {
+      font-size: 13px;
+      color: var(--texto-s);
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: var(--verde-claro);
+      border-radius: var(--radio-md);
+      border: 1px solid var(--verde-mid);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  </style>
 </head>
 <body>
 
@@ -31,12 +131,13 @@
       <li class="sidebar-item active" onclick="cambiarSubseccion('agenda'); cerrarSidebar()">🩺 Agenda del Día</li>
       <li class="sidebar-item" onclick="cambiarSubseccion('pacientes'); cerrarSidebar()">👥 Mis Pacientes</li>
       <li class="sidebar-item" onclick="cambiarSubseccion('calendario'); cerrarSidebar()">📅 Subir Calendario</li>
+      <li class="sidebar-item" onclick="cambiarSubseccion('perfil'); cerrarSidebar()">⚙️ Configurar Perfil</li>
     </ul>
   </div>
   <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">Cerrar Sesión</button>
 </div>
 
-<!-- MODAL HISTORIAL -->
+<!-- MODAL HISTORIAL (atención finalizada) -->
 <div class="push-overlay modal-historial" id="modal-historial">
   <div class="push-box">
     <div class="push-titulo">📝 Actualizar historial médico</div>
@@ -64,6 +165,56 @@
   </div>
 </div>
 
+<!-- MODAL FICHA PACIENTE -->
+<div class="modal-ficha-paciente" id="modal-ficha-paciente">
+  <div class="modal-box">
+    <h3>👶 Ficha del paciente</h3>
+    <p class="modal-sub" id="ficha-paciente-nombre">-</p>
+    <div class="ficha-ultima-visita" id="ficha-ultima-visita">Última visita: -</div>
+    <form onsubmit="guardarFichaPaciente(event)">
+      <div class="ficha-editable-grid">
+        <div class="ficha-editable-item">
+          <div class="ficha-label">Nombre y apellido</div>
+          <input type="text" id="fp-nombre" readonly>
+        </div>
+        <div class="ficha-editable-item">
+          <div class="ficha-label">DNI</div>
+          <input type="text" id="fp-dni" readonly>
+        </div>
+        <div class="ficha-editable-item">
+          <div class="ficha-label">Edad</div>
+          <input type="text" id="fp-edad" readonly>
+        </div>
+        <div class="ficha-editable-item">
+          <div class="ficha-label">Fecha de nacimiento</div>
+          <input type="date" id="fp-nacimiento">
+        </div>
+        <div class="ficha-editable-item">
+          <div class="ficha-label">Tipo de sangre</div>
+          <input type="text" id="fp-tipo-sangre" placeholder="Ej: A+">
+        </div>
+        <div class="ficha-editable-item">
+          <div class="ficha-label">Altura (cm)</div>
+          <input type="text" id="fp-altura" placeholder="Ej: 120" inputmode="decimal">
+        </div>
+        <div class="ficha-editable-item">
+          <div class="ficha-label">Peso (kg)</div>
+          <input type="text" id="fp-peso" placeholder="Ej: 25.5" inputmode="decimal">
+        </div>
+        <div class="ficha-editable-item full-width">
+          <div class="ficha-label">Alergias</div>
+          <textarea id="fp-alergias" placeholder="Describí las alergias del paciente..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-sec" onclick="cerrarModalFicha()">Cerrar</button>
+        <button type="button" class="btn btn-prim" onclick="descargarFichaTxt()">📥 Descargar .txt</button>
+        <button type="submit" class="btn btn-prim">💾 Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="dashboard-layout">
   <!-- DESKTOP SIDEBAR -->
   <div class="sidebar">
@@ -74,6 +225,7 @@
         <li class="sidebar-item active" onclick="cambiarSubseccion('agenda')">🩺 Agenda del Día</li>
         <li class="sidebar-item" onclick="cambiarSubseccion('pacientes')">👥 Mis Pacientes</li>
         <li class="sidebar-item" onclick="cambiarSubseccion('calendario')">📅 Subir Calendario</li>
+        <li class="sidebar-item" onclick="cambiarSubseccion('perfil')">⚙️ Configurar Perfil</li>
       </ul>
     </div>
     <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">Cerrar Sesión</button>
@@ -110,7 +262,7 @@
 
       <div class="panel-data">
         <h3>📋 Pacientes citados para hoy</h3>
-        <div class="table-container">
+        <div class="table-container" id="agenda-table-container">
           <table class="tabla-hc">
             <thead>
               <tr><th>Hora</th><th>Paciente</th><th>DNI</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr>
@@ -125,10 +277,10 @@
     <div id="sub-pacientes" class="subseccion-dash">
       <div class="panel-data">
         <h3>👥 Fichero general de pacientes</h3>
-        <div class="table-container">
+        <div class="table-container" id="pacientes-table-container">
           <table class="tabla-hc">
             <thead>
-              <tr><th>Paciente</th><th>DNI</th><th>Edad</th><th>Última Visita</th><th>Historial</th></tr>
+              <tr><th>Paciente</th><th>DNI</th><th>Edad</th><th>Última Visita</th><th>Acciones</th></tr>
             </thead>
             <tbody id="tabla-doctor-pacientes"></tbody>
           </table>
@@ -159,29 +311,78 @@
         </button>
       </div>
     </div>
+
+    <!-- SUB: CONFIGURAR PERFIL -->
+    <div id="sub-perfil" class="subseccion-dash">
+      <div class="panel-data" style="max-width: 500px;">
+        <h3>⚙️ Configurar perfil</h3>
+
+        <div style="margin-bottom: 24px">
+          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar contraseña</h4>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Contraseña actual</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="doc-pass-actual" placeholder="Contraseña actual">
+            </div>
+          </div>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Nueva contraseña</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="doc-pass-nueva" placeholder="Mínimo 8 caracteres">
+            </div>
+          </div>
+          <button class="btn btn-prim" onclick="cambiarPasswordDoctor()">Actualizar contraseña</button>
+        </div>
+
+        <div style="margin-bottom: 24px; border-top: 1px solid var(--borde); padding-top: 24px">
+          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar email</h4>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Contraseña actual (para confirmar)</label>
+            <div class="input-wrap">
+              <span class="input-ico">🔑</span>
+              <input type="password" id="doc-email-pass-actual" placeholder="Contraseña actual">
+            </div>
+          </div>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Nuevo email</label>
+            <div class="input-wrap">
+              <span class="input-ico">✉️</span>
+              <input type="email" id="doc-email-nuevo" placeholder="nuevo@email.com">
+            </div>
+          </div>
+          <button class="btn btn-prim" onclick="cambiarEmailDoctor()">Actualizar email</button>
+        </div>
+
+        <div style="border-top: 1px solid var(--borde); padding-top: 24px">
+          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar teléfono</h4>
+          <div class="campo" style="margin-bottom: 12px">
+            <label>Teléfono</label>
+            <div class="input-wrap">
+              <span class="input-ico">📞</span>
+              <input type="tel" id="doc-telefono" placeholder="+54 11 4000-0000">
+            </div>
+          </div>
+          <button class="btn btn-prim" onclick="cambiarTelefonoDoctor()">Actualizar teléfono</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script type="module">
   import { initDashboard } from '../js/dashboard-common.js'
+  import { supabase } from '../js/supabaseClient.js'
 
-  // ── DATOS MOCK ──
   let usuarioLogueado = null
-  let turnosHoy = [
-    { id: 't1', hora: '09:30', paciente: 'Tomás Gómez', dni: '54112233', tipo: 'Control pediátrico', estado: 'pendiente' },
-    { id: 't2', hora: '11:00', paciente: 'Martina López', dni: '49334455', tipo: 'Consulta por fiebre', estado: 'pendiente' },
-    { id: 't3', hora: '15:30', paciente: 'Lucas Fernández', dni: '51223344', tipo: 'Control de crecimiento', estado: 'pendiente' }
-  ]
-  let pacientes = [
-    { nombre: 'Tomás Gómez', dni: '54112233', edad: '6 años', ultimaVisita: '2026-03-12' },
-    { nombre: 'Martina López', dni: '49334455', edad: '8 años', ultimaVisita: '2026-01-20' },
-    { nombre: 'Lucas Fernández', dni: '51223344', edad: '4 años', ultimaVisita: '2026-05-15' },
-    { nombre: 'Sofía Martínez', dni: '50112233', edad: '10 años', ultimaVisita: '2026-04-02' }
-  ]
+  let turnosHoy = []
+  let pacientes = []
   let diasDisponibles = {}
   let horariosDisponibles = ['09:00','09:30','10:00','10:30','11:00','11:30','15:00','15:30','16:00','16:30']
   let horariosActivos = [...horariosDisponibles]
   let turnoAtendiendo = null
+  let pacienteFichaActual = null
 
   // ── INICIALIZACIÓN ──
   async function init() {
@@ -189,27 +390,136 @@
     if (!perfil) return
     usuarioLogueado = perfil
 
+    await cargarTurnosHoy()
+    await cargarPacientes()
+    await cargarCalendarioDoctor()
+
     pintarAgenda()
     pintarPacientes()
     pintarCalendarioEditor()
     pintarHorariosEditor()
     actualizarMetricas()
 
-    // Activar modo cards en mobile para tablas
+    // Activar modo cards en mobile SOLO para tablas que NO sean agenda
     if (window.innerWidth < 769) {
-      document.querySelectorAll('.table-container').forEach(c => c.classList.add('table-cards'))
+      document.querySelectorAll('.table-container').forEach(c => {
+        if (!c.id.includes('agenda')) c.classList.add('table-cards')
+      })
     }
   }
   init()
 
+  // ── CARGA DESDE SUPABASE ──
+  async function cargarTurnosHoy() {
+    if (!usuarioLogueado) return
+    const hoy = new Date()
+    const fechaStr = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`
+    try {
+      const { data, error } = await supabase
+        .from('turnos')
+        .select('*')
+        .eq('doctor_id', usuarioLogueado.id)
+        .eq('fecha', fechaStr)
+        .order('hora', { ascending: true })
+      if (!error && data) {
+        turnosHoy = data.map(t => ({
+          ...t,
+          estado: t.estado || 'pendiente'
+        }))
+      }
+    } catch (e) {
+      console.error('Error cargando turnos:', e)
+      turnosHoy = []
+    }
+  }
+
+  async function cargarPacientes() {
+    if (!usuarioLogueado) return
+    try {
+      // Obtener pacientes únicos que tienen turnos con este doctor
+      const { data: turnosData, error: turnosErr } = await supabase
+        .from('turnos')
+        .select('paciente_id, paciente_nombre')
+        .eq('doctor_id', usuarioLogueado.id)
+      if (turnosErr) {
+        console.error('Error cargando turnos para pacientes:', turnosErr)
+        pacientes = []
+        return
+      }
+
+      // Obtener IDs únicos de pacientes
+      const pacienteIds = [...new Set(turnosData.map(t => t.paciente_id).filter(Boolean))]
+      if (pacienteIds.length === 0) {
+        pacientes = []
+        return
+      }
+
+      // Cargar datos de pacientes
+      const { data, error } = await supabase
+        .from('pacientes')
+        .select('*')
+        .in('id', pacienteIds)
+      if (!error && data) {
+        pacientes = data
+      } else {
+        pacientes = []
+      }
+    } catch (e) {
+      console.error('Error cargando pacientes:', e)
+      pacientes = []
+    }
+  }
+
+  async function cargarCalendarioDoctor() {
+    if (!usuarioLogueado) return
+    try {
+      const { data, error } = await supabase
+        .from('doctores')
+        .select('dias, horarios')
+        .eq('id', usuarioLogueado.id)
+        .single()
+      if (!error && data) {
+        if (data.dias) {
+          // dias viene como array de la tabla doctores
+          // No aplicamos directamente, el calendario editor usa el estado local
+        }
+        if (data.horarios) {
+          horariosActivos = data.horarios
+        }
+      }
+    } catch (e) {
+      console.log('No hay registro en tabla doctores para este perfil')
+    }
+  }
+
+  function calcularEdad(fecha) {
+    if (!fecha) return 'No especificado'
+    const hoy = new Date()
+    const nac = new Date(fecha)
+    let edad = hoy.getFullYear() - nac.getFullYear()
+    const m = hoy.getMonth() - nac.getMonth()
+    if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--
+    return edad + ' años'
+  }
+
+  function formatearFecha(fechaStr) {
+    if (!fechaStr) return '-'
+    const f = new Date(fechaStr)
+    return f.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }
+
   // ── AGENDA ──
   function pintarAgenda() {
     const tbody = document.getElementById('tabla-doctor-agenda')
+    if (!turnosHoy.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--texto-s)">No hay turnos para hoy.</td></tr>'
+      return
+    }
     tbody.innerHTML = turnosHoy.map(t => {
       let estadoHtml = ''
       let accionesHtml = ''
 
-      if (t.estado === 'pendiente') {
+      if (t.estado === 'pendiente' || t.estado === 'Confirmado') {
         estadoHtml = '<span class="estado-badge pendiente">● Pendiente</span>'
         accionesHtml = `<button class="btn btn-prim btn-sm" onclick="atenderPaciente('${t.id}')">🩺 Atender</button>`
       } else if (t.estado === 'atendiendo') {
@@ -222,9 +532,9 @@
 
       return `<tr>
         <td data-label="Hora"><strong>${t.hora} hs</strong></td>
-        <td data-label="Paciente">${t.paciente}</td>
-        <td data-label="DNI">${t.dni}</td>
-        <td data-label="Tipo">${t.tipo}</td>
+        <td data-label="Paciente">${t.paciente_nombre}</td>
+        <td data-label="DNI">${t.dni || '-'}</td>
+        <td data-label="Tipo">${t.tipo || 'Consulta pediátrica'}</td>
         <td data-label="Estado">${estadoHtml}</td>
         <td data-label="Acciones">${accionesHtml}</td>
       </tr>`
@@ -233,9 +543,10 @@
 
   window.atenderPaciente = function(id) {
     const turno = turnosHoy.find(t => t.id === id)
+    if (!turno) return
     turno.estado = 'atendiendo'
     turnoAtendiendo = turno
-    mostrarPush('warn', 'Avisando...', `Iniciando atención de ${turno.paciente}.`,
+    mostrarPush('warn', 'Avisando...', `Iniciando atención de ${turno.paciente_nombre}.`,
       '<button class="btn btn-warn" onclick="cerrarPush()">Entendido</button>')
     pintarAgenda()
     actualizarMetricas()
@@ -248,7 +559,8 @@
 
   window.confirmarFinalizar = function(id) {
     cerrarPush()
-    document.getElementById('modal-historial-paciente').textContent = turnoAtendiendo?.paciente || 'Paciente'
+    const turno = turnosHoy.find(t => t.id === id)
+    document.getElementById('modal-historial-paciente').textContent = turno?.paciente_nombre || 'Paciente'
     document.getElementById('modal-historial').classList.add('activo')
   }
 
@@ -256,17 +568,42 @@
     document.getElementById('modal-historial').classList.remove('activo')
   }
 
-  window.guardarHistorial = function(e) {
+  window.guardarHistorial = async function(e) {
     e.preventDefault()
-    const diagnostico = document.getElementById('h-diagnostico').value
-    const tratamiento = document.getElementById('h-tratamiento').value
+    const diagnostico = document.getElementById('h-diagnostico').value.trim()
+    const tratamiento = document.getElementById('h-tratamiento').value.trim()
 
     if (!diagnostico) {
       mostrarPush('err', 'Faltan datos', 'Ingresá al menos el diagnóstico.')
       return
     }
 
-    if (turnoAtendiendo) turnoAtendiendo.estado = 'finalizado'
+    // Guardar en historial_clinico
+    if (turnoAtendiendo) {
+      try {
+        const { error } = await supabase
+          .from('historial_clinico')
+          .insert({
+            tutor_id: turnoAtendiendo.tutor_id,
+            paciente_id: turnoAtendiendo.paciente_id,
+            fecha: turnoAtendiendo.fecha,
+            profesional: usuarioLogueado.nombre + ' ' + usuarioLogueado.apellido,
+            diagnostico: diagnostico,
+            tratamiento: tratamiento
+          })
+        if (error) console.error('Error guardando historial:', error)
+      } catch (err) {
+        console.error('Error inesperado guardando historial:', err)
+      }
+
+      // Actualizar estado del turno
+      try {
+        await supabase.from('turnos').update({ estado: 'finalizado' }).eq('id', turnoAtendiendo.id)
+      } catch (err) {
+        console.error('Error actualizando turno:', err)
+      }
+      turnoAtendiendo.estado = 'finalizado'
+    }
 
     cerrarModalHistorial()
     document.getElementById('h-diagnostico').value = ''
@@ -281,26 +618,153 @@
   function actualizarMetricas() {
     document.getElementById('metric-hoy').textContent = turnosHoy.length
     document.getElementById('metric-atendidos').textContent = turnosHoy.filter(t => t.estado === 'finalizado').length
-    document.getElementById('metric-pendientes').textContent = turnosHoy.filter(t => t.estado === 'pendiente').length
+    document.getElementById('metric-pendientes').textContent = turnosHoy.filter(t => t.estado === 'pendiente' || t.estado === 'Confirmado').length
   }
 
   // ── PACIENTES ──
   function pintarPacientes() {
     const tbody = document.getElementById('tabla-doctor-pacientes')
-    tbody.innerHTML = pacientes.map(p => `
+    if (!pacientes.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--texto-s)">No hay pacientes registrados.</td></tr>'
+      return
+    }
+    tbody.innerHTML = pacientes.map(p => {
+      const edad = p.edad || calcularEdad(p.nacimiento)
+      // Buscar última visita en turnos
+      const ultimaVisita = '-'
+      return `
       <tr>
         <td data-label="Paciente"><strong>${p.nombre}</strong></td>
-        <td data-label="DNI">${p.dni}</td>
-        <td data-label="Edad">${p.edad}</td>
-        <td data-label="Última Visita">${p.ultimaVisita}</td>
-        <td data-label="Historial"><button class="btn btn-sec btn-sm" onclick="verHistorialPaciente('${p.dni}')">👁️ Ver</button></td>
+        <td data-label="DNI">${p.dni || '-'}</td>
+        <td data-label="Edad">${edad}</td>
+        <td data-label="Última Visita">${ultimaVisita}</td>
+        <td data-label="Acciones"><button class="btn btn-sec btn-sm" onclick="verFichaPaciente('${p.id}')">👁️ Ver</button></td>
       </tr>
-    `).join('')
+    `}).join('')
   }
-  window.verHistorialPaciente = function(dni) {
-    const p = pacientes.find(x => x.dni === dni)
-    mostrarPush('ok', `Historial de ${p.nombre}`, `DNI: ${p.dni} · Edad: ${p.edad} · Última visita: ${p.ultimaVisita}`)
+
+  window.verFichaPaciente = async function(id) {
+    const p = pacientes.find(x => x.id === id)
+    if (!p) return
+    pacienteFichaActual = p
+
+    // Buscar última visita
+    let ultimaVisita = '-'
+    try {
+      const { data, error } = await supabase
+        .from('turnos')
+        .select('fecha')
+        .eq('paciente_id', p.id)
+        .eq('doctor_id', usuarioLogueado.id)
+        .order('fecha', { ascending: false })
+        .limit(1)
+      if (!error && data && data.length > 0) {
+        ultimaVisita = formatearFecha(data[0].fecha)
+      }
+    } catch (e) {
+      console.error('Error buscando última visita:', e)
+    }
+
+    document.getElementById('ficha-paciente-nombre').textContent = p.nombre
+    document.getElementById('ficha-ultima-visita').textContent = `Última visita: ${ultimaVisita}`
+
+    document.getElementById('fp-nombre').value = p.nombre || ''
+    document.getElementById('fp-dni').value = p.dni || ''
+    document.getElementById('fp-edad').value = p.edad || calcularEdad(p.nacimiento)
+    document.getElementById('fp-nacimiento').value = p.nacimiento || ''
+    document.getElementById('fp-tipo-sangre').value = p.tipo_sangre || ''
+    document.getElementById('fp-altura').value = p.altura || ''
+    document.getElementById('fp-peso').value = p.peso || ''
+    document.getElementById('fp-alergias').value = p.alergias || ''
+
+    document.getElementById('modal-ficha-paciente').classList.add('activo')
   }
+
+  window.cerrarModalFicha = function() {
+    document.getElementById('modal-ficha-paciente').classList.remove('activo')
+    pacienteFichaActual = null
+  }
+
+  window.guardarFichaPaciente = async function(e) {
+    e.preventDefault()
+    if (!pacienteFichaActual) return
+
+    const updates = {
+      nacimiento: document.getElementById('fp-nacimiento').value || null,
+      tipo_sangre: document.getElementById('fp-tipo-sangre').value.trim() || null,
+      altura: document.getElementById('fp-altura').value.trim() || null,
+      peso: document.getElementById('fp-peso').value.trim() || null,
+      alergias: document.getElementById('fp-alergias').value.trim() || null
+    }
+
+    try {
+      const { error } = await supabase
+        .from('pacientes')
+        .update(updates)
+        .eq('id', pacienteFichaActual.id)
+      if (error) {
+        mostrarPush('err', 'Error', 'No se pudieron guardar los cambios: ' + error.message)
+        return
+      }
+
+      // Actualizar local
+      const idx = pacientes.findIndex(p => p.id === pacienteFichaActual.id)
+      if (idx !== -1) {
+        pacientes[idx] = { ...pacientes[idx], ...updates }
+      }
+
+      mostrarPush('ok', '¡Datos actualizados!', 'La ficha del paciente fue actualizada correctamente.')
+      pintarPacientes()
+    } catch (err) {
+      mostrarPush('err', 'Error', 'Ocurrió un error inesperado al guardar.')
+    }
+  }
+
+  window.descargarFichaTxt = function() {
+    if (!pacienteFichaActual) return
+
+    const p = pacienteFichaActual
+    const nacimiento = document.getElementById('fp-nacimiento').value || p.nacimiento || '-'
+    const tipoSangre = document.getElementById('fp-tipo-sangre').value || p.tipo_sangre || '-'
+    const altura = document.getElementById('fp-altura').value || p.altura || '-'
+    const peso = document.getElementById('fp-peso').value || p.peso || '-'
+    const alergias = document.getElementById('fp-alergias').value || p.alergias || '-'
+    const edad = document.getElementById('fp-edad').value || p.edad || calcularEdad(p.nacimiento)
+
+    const contenido = `HEALTHCARE PEDIATRÍA - FICHA DEL PACIENTE
+═══════════════════════════════════════
+
+Nombre y apellido: ${p.nombre}
+DNI: ${p.dni || '-'}
+Edad: ${edad}
+Fecha de nacimiento: ${nacimiento}
+Tipo de sangre: ${tipoSangre}
+Altura: ${altura} cm
+Peso: ${peso} kg
+Alergias: ${alergias}
+
+═══════════════════════════════════════
+Generado el: ${new Date().toLocaleDateString('es-AR')}
+Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.apellido : '-'}
+`
+
+    const blob = new Blob([contenido], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Ficha_${p.nombre.replace(/ /g,'_')}_${new Date().toISOString().split('T')[0]}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    mostrarPush('ok', 'Ficha descargada', `La ficha de ${p.nombre} fue descargada correctamente.`)
+  }
+
+  // Cerrar modal al hacer click fuera
+  document.getElementById('modal-ficha-paciente').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalFicha()
+  })
 
   // ── CALENDARIO EDITOR ──
   function pintarCalendarioEditor() {
@@ -364,10 +828,138 @@
     pintarHorariosEditor()
   }
 
-  window.subirCalendario = function() {
+  window.subirCalendario = async function() {
     const diasDisp = Object.entries(diasDisponibles).filter(([k,v]) => v === 'disponible').length
+
+    // Guardar en tabla doctores (upsert)
+    try {
+      const diasArray = Object.entries(diasDisponibles)
+        .filter(([k,v]) => v === 'disponible')
+        .map(([k]) => {
+          const d = new Date(k)
+          return d.getDay()
+        })
+      const diasUnicos = [...new Set(diasArray)]
+
+      const { error } = await supabase
+        .from('doctores')
+        .upsert({
+          id: usuarioLogueado.id,
+          nombre: usuarioLogueado.nombre,
+          apellido: usuarioLogueado.apellido,
+          especialidad: usuarioLogueado.especialidad || 'Pediatría General',
+          email: usuarioLogueado.email,
+          telefono: usuarioLogueado.telefono,
+          activo: true,
+          estado: 'libre',
+          dias: diasUnicos.length ? diasUnicos : [1,2,3,4,5],
+          horarios: horariosActivos
+        }, { onConflict: 'id' })
+
+      if (error) {
+        console.error('Error guardando calendario:', error)
+        mostrarPush('err', 'Error', 'No se pudo guardar el calendario: ' + error.message)
+        return
+      }
+    } catch (e) {
+      console.error('Error inesperado guardando calendario:', e)
+    }
+
     mostrarPush('ok', '¡Calendario actualizado!',
       `Se guardaron ${diasDisp} días disponibles y ${horariosActivos.length} horarios de atención.`)
+  }
+
+  // ── PERFIL ──
+  window.cambiarPasswordDoctor = async function() {
+    const actual = document.getElementById('doc-pass-actual').value
+    const nueva = document.getElementById('doc-pass-nueva').value
+    if (!actual || !nueva || nueva.length < 8) {
+      mostrarPush('err', 'Error', 'La nueva contraseña debe tener al menos 8 caracteres.')
+      return
+    }
+
+    // Re-autenticar con contraseña actual
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: usuarioLogueado.email,
+      password: actual
+    })
+    if (authError) {
+      mostrarPush('err', 'Contraseña incorrecta', 'La contraseña actual no es válida.')
+      return
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: nueva })
+    if (error) {
+      mostrarPush('err', 'Error', 'No se pudo actualizar la contraseña: ' + error.message)
+      return
+    }
+    mostrarPush('ok', 'Contraseña actualizada', 'Tu contraseña fue cambiada correctamente.')
+    document.getElementById('doc-pass-actual').value = ''
+    document.getElementById('doc-pass-nueva').value = ''
+  }
+
+  window.cambiarEmailDoctor = async function() {
+    const passActual = document.getElementById('doc-email-pass-actual').value
+    const email = document.getElementById('doc-email-nuevo').value.trim()
+
+    if (!passActual) {
+      mostrarPush('err', 'Faltan datos', 'Ingresá tu contraseña actual para confirmar.')
+      return
+    }
+    if (!email.includes('@')) {
+      mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
+      return
+    }
+
+    // Re-autenticar con contraseña actual
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: usuarioLogueado.email,
+      password: passActual
+    })
+    if (authError) {
+      mostrarPush('err', 'Contraseña incorrecta', 'La contraseña ingresada no es válida.')
+      return
+    }
+
+    // Actualizar email en auth.users
+    const { error: updateError } = await supabase.auth.updateUser({ email: email })
+    if (updateError) {
+      mostrarPush('err', 'Error', 'No se pudo actualizar el email: ' + updateError.message)
+      return
+    }
+
+    // Actualizar email en tabla perfiles
+    const { error: perfilError } = await supabase
+      .from('perfiles')
+      .update({ email: email })
+      .eq('id', usuarioLogueado.id)
+    if (perfilError) {
+      console.error('Error actualizando perfiles:', perfilError)
+    }
+
+    usuarioLogueado.email = email
+    mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}. Revisá tu bandeja de entrada para confirmar.`)
+    document.getElementById('doc-email-pass-actual').value = ''
+    document.getElementById('doc-email-nuevo').value = ''
+  }
+
+  window.cambiarTelefonoDoctor = async function() {
+    const tel = document.getElementById('doc-telefono').value
+    if (!tel) {
+      mostrarPush('err', 'Teléfono vacío', 'Ingresá un número de teléfono.')
+      return
+    }
+    const telLimpio = tel.replace(/[^\d]/g, '')
+    const { error } = await supabase
+      .from('perfiles')
+      .update({ telefono: telLimpio })
+      .eq('id', usuarioLogueado.id)
+    if (error) {
+      mostrarPush('err', 'Error', 'No se pudo actualizar el teléfono: ' + error.message)
+      return
+    }
+    mostrarPush('ok', 'Teléfono actualizado', `Tu teléfono fue cambiado a ${tel}.`)
+    document.getElementById('doc-telefono').value = ''
   }
 </script>
 </body>
