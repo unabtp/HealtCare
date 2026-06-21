@@ -303,7 +303,7 @@
         <label>Email</label>
         <div class="input-wrap">
           <span class="input-ico">✉️</span>
-          <input type="email" id="edit-email" required>
+          <input type="email" id="edit-email" disabled style="opacity:.6; cursor:not-allowed">
         </div>
       </div>
       <div class="campo" style="margin-bottom:20px">
@@ -561,10 +561,9 @@
     const nombre = document.getElementById('edit-nombre').value.trim()
     const apellido = document.getElementById('edit-apellido').value.trim()
     const dni = document.getElementById('edit-dni').value.trim()
-    const email = document.getElementById('edit-email').value.trim()
     const telefono = document.getElementById('edit-telefono').value.trim()
 
-    if (!nombre || !apellido || !dni || !email) {
+    if (!nombre || !apellido || !dni) {
       mostrarPush('err', 'Error', 'Completá todos los campos obligatorios.')
       return
     }
@@ -577,7 +576,7 @@
 
     const { error } = await supabase
       .from('perfiles')
-      .update({ nombre, apellido, dni, email, telefono: telLimpio })
+      .update({ nombre, apellido, dni, telefono: telLimpio })
       .eq('id', id)
 
     if (error) {
@@ -589,7 +588,7 @@
     // Actualizar local
     const idx = usuarios.findIndex(u => u.id === id)
     if (idx !== -1) {
-      usuarios[idx] = { ...usuarios[idx], nombre, apellido, dni, email, telefono: telLimpio }
+      usuarios[idx] = { ...usuarios[idx], nombre, apellido, dni, telefono: telLimpio }
     }
 
     cerrarModalEditar()
