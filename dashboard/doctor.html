@@ -340,7 +340,6 @@
       <li class="sidebar-item active" onclick="cambiarSubseccion('agenda'); cerrarSidebar()">🩺 Agenda del Día</li>
       <li class="sidebar-item" onclick="cambiarSubseccion('pacientes'); cerrarSidebar()">👥 Mis Pacientes</li>
       <li class="sidebar-item" onclick="cambiarSubseccion('calendario'); cerrarSidebar()">📅 Subir Calendario</li>
-      <li class="sidebar-item" onclick="cambiarSubseccion('perfil'); cerrarSidebar()">⚙️ Configurar Perfil</li>
     </ul>
   </div>
   <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">Cerrar Sesión</button>
@@ -465,7 +464,6 @@
         <li class="sidebar-item active" onclick="cambiarSubseccion('agenda')">🩺 Agenda del Día</li>
         <li class="sidebar-item" onclick="cambiarSubseccion('pacientes')">👥 Mis Pacientes</li>
         <li class="sidebar-item" onclick="cambiarSubseccion('calendario')">📅 Subir Calendario</li>
-        <li class="sidebar-item" onclick="cambiarSubseccion('perfil')">⚙️ Configurar Perfil</li>
       </ul>
     </div>
     <button class="btn btn-peligro btn-full" onclick="cerrarSesion()">Cerrar Sesión</button>
@@ -555,63 +553,6 @@
         <button class="btn btn-prim" onclick="subirCalendario()" style="padding: 12px 32px; font-size: 15px">
           ⬆️ Subir calendario y horarios
         </button>
-      </div>
-    </div>
-
-    <!-- SUB: CONFIGURAR PERFIL -->
-    <div id="sub-perfil" class="subseccion-dash">
-      <div class="panel-data" style="max-width: 500px;">
-        <h3>⚙️ Configurar perfil</h3>
-
-        <div style="margin-bottom: 24px">
-          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar contraseña</h4>
-          <div class="campo" style="margin-bottom: 12px">
-            <label>Contraseña actual</label>
-            <div class="input-wrap">
-              <span class="input-ico">🔑</span>
-              <input type="password" id="doc-pass-actual" placeholder="Contraseña actual">
-            </div>
-          </div>
-          <div class="campo" style="margin-bottom: 12px">
-            <label>Nueva contraseña</label>
-            <div class="input-wrap">
-              <span class="input-ico">🔑</span>
-              <input type="password" id="doc-pass-nueva" placeholder="Mínimo 8 caracteres">
-            </div>
-          </div>
-          <button class="btn btn-prim" onclick="cambiarPasswordDoctor()">Actualizar contraseña</button>
-        </div>
-
-        <div style="margin-bottom: 24px; border-top: 1px solid var(--borde); padding-top: 24px">
-          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar email</h4>
-          <div class="campo" style="margin-bottom: 12px">
-            <label>Contraseña actual (para confirmar)</label>
-            <div class="input-wrap">
-              <span class="input-ico">🔑</span>
-              <input type="password" id="doc-email-pass-actual" placeholder="Contraseña actual">
-            </div>
-          </div>
-          <div class="campo" style="margin-bottom: 12px">
-            <label>Nuevo email</label>
-            <div class="input-wrap">
-              <span class="input-ico">✉️</span>
-              <input type="email" id="doc-email-nuevo" placeholder="nuevo@email.com">
-            </div>
-          </div>
-          <button class="btn btn-prim" onclick="cambiarEmailDoctor()">Actualizar email</button>
-        </div>
-
-        <div style="border-top: 1px solid var(--borde); padding-top: 24px">
-          <h4 style="font-size: 14px; color: var(--texto-s); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em">Cambiar teléfono</h4>
-          <div class="campo" style="margin-bottom: 12px">
-            <label>Teléfono</label>
-            <div class="input-wrap">
-              <span class="input-ico">📞</span>
-              <input type="tel" id="doc-telefono" placeholder="+54 11 4000-0000">
-            </div>
-          </div>
-          <button class="btn btn-prim" onclick="cambiarTelefonoDoctor()">Actualizar teléfono</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1408,108 +1349,6 @@ Profesional: ${usuarioLogueado ? usuarioLogueado.nombre + ' ' + usuarioLogueado.
     }
   }
 
-  // ═══════════════════════════════════════════
-  //  PERFIL
-  //  ═══════════════════════════════════════════
-  window.cambiarPasswordDoctor = async function() {
-    const actual = document.getElementById('doc-pass-actual').value
-    const nueva = document.getElementById('doc-pass-nueva').value
-    if (!actual || !nueva || nueva.length < 8) {
-      mostrarPush('err', 'Error', 'La nueva contraseña debe tener al menos 8 caracteres.')
-      return
-    }
-
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: usuarioLogueado.email,
-      password: actual
-    })
-    if (authError) {
-      mostrarPush('err', 'Contraseña incorrecta', 'La contraseña actual no es válida.')
-      return
-    }
-
-    const { error } = await supabase.auth.updateUser({ password: nueva })
-    if (error) {
-      mostrarPush('err', 'Error', 'No se pudo actualizar la contraseña: ' + error.message)
-      return
-    }
-    mostrarPush('ok', 'Contraseña actualizada', 'Tu contraseña fue cambiada correctamente.')
-    document.getElementById('doc-pass-actual').value = ''
-    document.getElementById('doc-pass-nueva').value = ''
-  }
-
-  window.cambiarEmailDoctor = async function() {
-    const passActual = document.getElementById('doc-email-pass-actual').value
-    const email = document.getElementById('doc-email-nuevo').value.trim()
-
-    if (!passActual) {
-      mostrarPush('err', 'Faltan datos', 'Ingresá tu contraseña actual para confirmar.')
-      return
-    }
-    if (!email.includes('@')) {
-      mostrarPush('err', 'Email inválido', 'Ingresá un email válido.')
-      return
-    }
-
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: usuarioLogueado.email,
-      password: passActual
-    })
-    if (authError) {
-      mostrarPush('err', 'Contraseña incorrecta', 'La contraseña ingresada no es válida.')
-      return
-    }
-
-    const { error: updateError } = await supabase.auth.updateUser({ email: email })
-    if (updateError) {
-      mostrarPush('err', 'Error', 'No se pudo actualizar el email: ' + updateError.message)
-      return
-    }
-
-    const { error: perfilError } = await supabase
-      .from('perfiles')
-      .update({ email: email })
-      .eq('id', usuarioLogueado.id)
-    if (perfilError) {
-      console.error('Error actualizando perfiles:', perfilError)
-    }
-
-    usuarioLogueado.email = email
-    mostrarPush('ok', 'Email actualizado', `Tu email fue cambiado a ${email}. Revisá tu bandeja de entrada para confirmar.`)
-    document.getElementById('doc-email-pass-actual').value = ''
-    document.getElementById('doc-email-nuevo').value = ''
-  }
-
-  window.cambiarTelefonoDoctor = async function() {
-    const tel = document.getElementById('doc-telefono').value.trim()
-    if (!tel) {
-      mostrarPush('err', 'Teléfono vacío', 'Ingresá un número de teléfono.')
-      return
-    }
-    const telLimpio = tel.replace(/[^\d]/g, '')
-    if (telLimpio.length < 8) {
-      mostrarPush('err', 'Teléfono inválido', 'El teléfono debe tener al menos 8 dígitos.')
-      return
-    }
-
-    console.log('Actualizando teléfono para usuario:', usuarioLogueado.id, 'teléfono:', telLimpio)
-
-    const { data, error } = await supabase
-      .from('perfiles')
-      .update({ telefono: telLimpio })
-      .eq('id', usuarioLogueado.id)
-      .select()
-
-    if (error) {
-      console.error('Error actualizando teléfono:', error)
-      mostrarPush('err', 'Error', 'No se pudo actualizar el teléfono: ' + error.message)
-      return
-    }
-
-    console.log('Teléfono actualizado:', data)
-    mostrarPush('ok', 'Teléfono actualizado', `Tu teléfono fue cambiado a ${tel}.`)
-    document.getElementById('doc-telefono').value = ''
-  }
 </script>
 </body>
 </html>
