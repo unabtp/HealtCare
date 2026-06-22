@@ -202,6 +202,54 @@
       }
       .form-titulo { font-size: 28px; }
     }
+
+    /* ── MODAL RECUPERAR CONTRASEÑA ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: var(--content-pad);
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-box {
+      background: var(--blanco);
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      animation: slideUp 0.3s ease;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: var(--verde-claro);
+      color: var(--verde);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover {
+      background: var(--verde);
+      color: var(--blanco);
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
   </style>
 </head>
 <body>
@@ -260,7 +308,7 @@
           </div>
           <div class="check-row">
             <label class="check-label"><input type="checkbox" id="recordar"> Recordarme</label>
-            <a href="#" class="link-verde">¿Olvidaste tu contraseña?</a>
+            <a href="#" class="link-verde" onclick="abrirModalReset(event)">¿Olvidaste tu contraseña?</a>
           </div>
           <button type="submit" class="btn btn-prim btn-full" id="btn-login">
             <span class="spinner" id="spin-login"></span>
@@ -359,6 +407,34 @@
           </button>
         </form>
         <p class="form-footer">¿Ya tenés cuenta? <a href="#" class="link-verde" onclick="cambiarTab('login')">Iniciá sesión</a></p>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════
+           MODAL: RECUPERAR CONTRASEÑA
+           ═══════════════════════════════════════════════ -->
+      <div class="modal-overlay" id="modal-reset" style="display:none;">
+        <div class="modal-box">
+          <button type="button" class="modal-close" onclick="cerrarModalReset()" aria-label="Cerrar">✕</button>
+          <h3 class="form-titulo" style="font-size:22px;margin-bottom:8px;">Recuperar contraseña</h3>
+          <p class="form-subtitulo" style="margin-bottom:20px;">Ingresá tu email y te enviaremos un enlace para cambiarla.</p>
+          
+          <div class="alerta" id="alerta-reset"></div>
+          
+          <form id="form-reset" onsubmit="enviarResetEmail(event)" novalidate>
+            <div class="campo">
+              <label for="reset-email">Correo electrónico</label>
+              <div class="input-wrap">
+                <span class="input-ico">✉️</span>
+                <input type="email" id="reset-email" placeholder="tu@email.com" autocomplete="email">
+              </div>
+              <p class="msg-error" id="err-reset-email">⚠ Ingresá un email válido.</p>
+            </div>
+            <button type="submit" class="btn btn-prim btn-full" id="btn-reset">
+              <span class="spinner" id="spin-reset"></span>
+              <span id="txt-reset">Enviar enlace</span>
+            </button>
+          </form>
+        </div>
       </div>
 
     </div>
@@ -623,6 +699,103 @@
     window.calcStrength('')
     setTimeout(() => window.cambiarTab('login'), 2800)
   }
+
+  /* ═══════════════════════════════════════════════
+     RECUPERAR CONTRASEÑA - FUNCIONES
+     ═══════════════════════════════════════════════ */
+  
+  window.abrirModalReset = function(e) {
+    if (e) e.preventDefault()
+    document.getElementById('modal-reset').style.display = 'flex'
+    document.getElementById('reset-email').value = ''
+    document.getElementById('reset-email').focus()
+    limpiarAlertasReset()
+  }
+
+  window.cerrarModalReset = function() {
+    document.getElementById('modal-reset').style.display = 'none'
+    limpiarAlertasReset()
+  }
+
+  function limpiarAlertasReset() {
+    const alerta = document.getElementById('alerta-reset')
+    if (alerta) {
+      alerta.className = 'alerta'
+      alerta.textContent = ''
+    }
+    const err = document.getElementById('err-reset-email')
+    if (err) err.classList.remove('visible')
+    const input = document.getElementById('reset-email')
+    if (input) input.classList.remove('error-field', 'ok-field')
+  }
+
+  function setLoadingReset(loading) {
+    document.getElementById('spin-reset').classList.toggle('visible', loading)
+    document.getElementById('txt-reset').style.display = loading ? 'none' : ''
+    document.getElementById('btn-reset').disabled = loading
+  }
+
+  window.enviarResetEmail = async function(e) {
+    e.preventDefault()
+    limpiarAlertasReset()
+    
+    const email = document.getElementById('reset-email').value.trim()
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    
+    const input = document.getElementById('reset-email')
+    input.classList.toggle('error-field', !emailOk)
+    input.classList.toggle('ok-field', emailOk)
+    document.getElementById('err-reset-email').classList.toggle('visible', !emailOk)
+    
+    if (!emailOk) return
+
+    setLoadingReset(true)
+
+    try {
+      // Generar token UUID en el cliente
+      const token = crypto.randomUUID()
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/send-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        body: JSON.stringify({ email, token })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al procesar la solicitud')
+      }
+
+      const alerta = document.getElementById('alerta-reset')
+      alerta.className = 'alerta ok visible'
+      alerta.textContent = '✓ Si el email existe en nuestro sistema, recibirás un enlace para cambiar tu contraseña.'
+      
+      document.getElementById('form-reset').reset()
+      
+      // Cerrar modal después de 3 segundos
+      setTimeout(() => {
+        cerrarModalReset()
+      }, 3000)
+
+    } catch (err) {
+      console.error('Error en reset:', err)
+      const alerta = document.getElementById('alerta-reset')
+      alerta.className = 'alerta err visible'
+      alerta.textContent = '❌ ' + (err.message || 'Error al enviar el email. Intentá de nuevo.')
+    } finally {
+      setLoadingReset(false)
+    }
+  }
+
+  // Cerrar modal al hacer click fuera
+  document.getElementById('modal-reset').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalReset()
+  })
+
   </script>
   <!-- REACTIVACIÓN DE CUENTA (desde email de inactividad) -->
   <script type="module">
