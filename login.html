@@ -755,7 +755,7 @@
       // Generar token UUID en el cliente
       const token = crypto.randomUUID()
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/send-password-reset`, {
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/send-password-reset`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
