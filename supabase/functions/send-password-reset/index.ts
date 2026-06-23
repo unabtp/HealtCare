@@ -1,47 +1,61 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'onboarding@resend.dev'
+
 serve(async (req) => {
   // CORS
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { 
+      headers: { 
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      } 
+    })
   }
 
-  if (req.method !== "POST") {
+  if (req.method !== 'POST') {
     return new Response(
-      JSON.stringify({ error: "Método no permitido" }),
-      { status: 405, headers: { "Content-Type": "application/json" } }
-    );
+      JSON.stringify({ error: 'Método no permitido' }),
+      { 
+        status: 405, 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        } 
+      }
+    )
   }
 
   try {
-    const { email, token } = await req.json();
+    const { email, token } = await req.json()
 
     if (!email || !token) {
       return new Response(
-        JSON.stringify({ error: "Faltan parámetros: email y token son requeridos" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+        JSON.stringify({ error: 'Faltan parámetros: email y token son requeridos' }),
+        { 
+          status: 400, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          } 
+        }
+      )
     }
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") || "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
-    );
+    )
 
     // Verificar que el email existe en perfiles
     const { data: perfil, error: perfilError } = await supabaseAdmin
       .from("perfiles")
       .select("dni, nombre, apellido")
       .eq("email", email)
-      .single();
+      .single()
 
     if (perfilError || !perfil) {
       return new Response(
@@ -49,8 +63,14 @@ serve(async (req) => {
           success: true,
           message: "Si el email existe en nuestro sistema, recibirás un enlace para cambiar tu contraseña.",
         }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
+        { 
+          status: 200, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          } 
+        }
+      )
     }
 
     // Insertar token en password_resets
@@ -62,19 +82,25 @@ serve(async (req) => {
         dni: perfil.dni,
         used: false,
         expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      });
+      })
 
     if (insertError) {
-      console.error("Error insertando token:", insertError);
+      console.error("Error insertando token:", insertError)
       return new Response(
         JSON.stringify({ error: "Error al generar el token de recuperación" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+        { 
+          status: 500, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          } 
+        }
+      )
     }
 
     // Construir URL de reset
-    const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:3000";
-    const resetUrl = `${siteUrl}/reset-password.html?token=${token}&email=${encodeURIComponent(email)}`;
+    const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:3000"
+    const resetUrl = `${siteUrl}/reset-password.html?token=${token}&email=${encodeURIComponent(email)}`
 
     // HTML del email
     const emailHtml = `
@@ -121,58 +147,68 @@ serve(async (req) => {
   </div>
 </body>
 </html>
-    `;
+    `
 
-    // Intentar enviar email con Resend
-    try {
-      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-      const FROM_EMAIL = Deno.env.get("FROM_EMAIL");
+    // Enviar email via Resend
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: `HealthCare Pediatría <${FROM_EMAIL}>`,
+        to: [email],
+        subject: 'HealthCare - Recuperación de Contraseña',
+        html: emailHtml
+      })
+    })
 
-      if (!RESEND_API_KEY || !FROM_EMAIL) {
-        throw new Error("Faltan variables de entorno para envío de email");
-      }
+    const data = await res.json()
 
-      const resendResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: FROM_EMAIL,
-          to: email,
-          subject: "HealthCare - Recuperación de Contraseña",
-          html: emailHtml,
-        }),
-      });
-
-      if (!resendResponse.ok) {
-        const errorText = await resendResponse.text();
-        throw new Error(`Resend error: ${errorText}`);
-      }
-
+    if (!res.ok) {
+      console.error('Error Resend:', data)
       return new Response(
-        JSON.stringify({ success: true, message: "Email enviado correctamente." }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
-
-    } catch (emailErr) {
-      console.log("🔗 Reset URL (debug):", resetUrl);
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "Token generado correctamente.",
+        JSON.stringify({ 
+          success: true, 
+          message: 'Token generado correctamente.',
           debug_url: resetUrl,
+          resend_error: data.message || 'Error enviando email'
         }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
+        { 
+          status: 200, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          } 
+        }
+      )
     }
 
+    return new Response(
+      JSON.stringify({ success: true, message: "Email enviado correctamente." }),
+      { 
+        status: 200, 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        } 
+      }
+    )
+
   } catch (err) {
-    console.error("Error en Edge Function:", err);
+    console.error("Error en Edge Function:", err)
     return new Response(
       JSON.stringify({ error: "Error interno del servidor" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+      { 
+        status: 500, 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        } 
+      }
+    )
   }
-});
+})
+
+"""

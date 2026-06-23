@@ -2,22 +2,29 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
 serve(async (req) => {
-  // CORS
+  // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info",
       },
     });
   }
 
+  // Solo POST
   if (req.method !== "POST") {
     return new Response(
       JSON.stringify({ error: "Método no permitido" }),
-      { status: 405, headers: { "Content-Type": "application/json" } }
+      {
+        status: 405,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
     );
   }
 
@@ -27,14 +34,26 @@ serve(async (req) => {
     if (!email || !newPassword || !token) {
       return new Response(
         JSON.stringify({ error: "Faltan parámetros requeridos" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
     if (newPassword.length < 8) {
       return new Response(
         JSON.stringify({ error: "La contraseña debe tener al menos 8 caracteres" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -56,7 +75,13 @@ serve(async (req) => {
     if (resetError || !resetData) {
       return new Response(
         JSON.stringify({ error: "Token inválido, expirado o ya utilizado" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -71,7 +96,13 @@ serve(async (req) => {
     if (perfilError || !perfilData) {
       return new Response(
         JSON.stringify({ error: "No se encontró una cuenta con ese DNI y email" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -81,7 +112,13 @@ serve(async (req) => {
     if (userError) {
       return new Response(
         JSON.stringify({ error: "Error buscando usuario" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -90,7 +127,13 @@ serve(async (req) => {
     if (!user) {
       return new Response(
         JSON.stringify({ error: "Usuario no encontrado" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
+        {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -103,7 +146,13 @@ serve(async (req) => {
     if (updateError) {
       return new Response(
         JSON.stringify({ error: updateError.message }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -115,14 +164,26 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, message: "Contraseña actualizada correctamente" }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
     );
 
   } catch (err) {
     console.error("Error:", err);
     return new Response(
       JSON.stringify({ error: "Error interno del servidor" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
     );
   }
 });
