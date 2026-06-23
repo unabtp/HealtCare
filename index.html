@@ -466,7 +466,7 @@
     <li><a href="#inicio">Inicio</a></li>
     <li><a href="#nosotros">Nosotros</a></li>
     <li><a href="#turnos">Turnos</a></li>
-    <li><a href="#contacto">Contacto</a></li>
+    
   </ul>
   <a href="login.html" class="nav-cta btn btn-sm">Sacar turno</a>
   <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
@@ -479,7 +479,6 @@
   <a href="#inicio" onclick="cerrarMenu()">Inicio</a>
   <a href="#nosotros" onclick="cerrarMenu()">Nosotros</a>
   <a href="#turnos" onclick="cerrarMenu()">Turnos</a>
-  <a href="#contacto" onclick="cerrarMenu()">Contacto</a>
   <a href="login.html" class="btn btn-prim">Sacar turno</a>
 </div>
 
@@ -609,70 +608,7 @@
   </div>
 </section>
 
-<!-- CONTACTO -->
-<section id="contacto" class="seccion-contacto">
-  <div class="contacto-info">
-    <p class="seccion-tag">Contacto</p>
-    <h2 class="seccion-titulo">¿Tenés alguna <em>consulta</em>?</h2>
-    <p class="seccion-desc">Estamos para ayudarte. También podés escribirnos y te respondemos a la brevedad.</p>
-    <div class="contacto-datos">
-      <div class="dato">
-        <div class="dato-ico">📍</div>
-        <div class="dato-txt">
-          <strong>Dirección</strong>
-          <span>Av. Corrientes 1234, Buenos Aires</span>
-        </div>
-      </div>
-      <div class="dato">
-        <div class="dato-ico">📞</div>
-        <div class="dato-txt">
-          <strong>Teléfono</strong>
-          <span>+54 11 4000-0000</span>
-        </div>
-      </div>
-      <div class="dato">
-        <div class="dato-ico">✉️</div>
-        <div class="dato-txt">
-          <strong>Email</strong>
-          <span>contacto@healthcare-pediatria.com.ar</span>
-        </div>
-      </div>
-      <div class="dato">
-        <div class="dato-ico">🕐</div>
-        <div class="dato-txt">
-          <strong>Horario de atención</strong>
-          <span>Lunes a viernes: 8:00 – 19:00 hs</span>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div>
-    <p class="seccion-tag" style="margin-top:8px">Escribinos</p>
-    <h3 style="font-family:var(--font-titulo);font-size:24px;margin-bottom:var(--space-lg);color:var(--texto)">Envianos un mensaje</h3>
-    <form class="form-contacto" onsubmit="enviarContacto(event)">
-      <div class="form-row">
-        <div>
-          <label for="cf-nombre">Nombre</label>
-          <input type="text" id="cf-nombre" placeholder="Tu nombre" required>
-        </div>
-        <div>
-          <label for="cf-apellido">Apellido</label>
-          <input type="text" id="cf-apellido" placeholder="Tu apellido" required>
-        </div>
-      </div>
-      <div>
-        <label for="cf-email">Email</label>
-        <input type="email" id="cf-email" placeholder="tu@email.com" required>
-      </div>
-      <div>
-        <label for="cf-mensaje">Mensaje</label>
-        <textarea id="cf-mensaje" placeholder="Escribí tu consulta acá..." required></textarea>
-      </div>
-      <button type="submit" class="btn btn-prim">Enviar mensaje</button>
-    </form>
-  </div>
-</section>
 
 <!-- FOOTER -->
 <footer class="footer">
